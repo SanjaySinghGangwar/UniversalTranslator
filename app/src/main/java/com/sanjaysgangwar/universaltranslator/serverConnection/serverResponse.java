@@ -1,6 +1,7 @@
 package com.sanjaysgangwar.universaltranslator.serverConnection;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Base64;
@@ -8,6 +9,7 @@ import android.util.Log;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.sanjaysgangwar.universaltranslator.activity.resultScreen;
 import com.sanjaysgangwar.universaltranslator.api.apiInterface;
 import com.sanjaysgangwar.universaltranslator.modelClasses.translateModel.Model;
 import com.sanjaysgangwar.universaltranslator.modelClasses.visionModel.VisionModel;
@@ -108,8 +110,13 @@ public class serverResponse {
                     if (response.body() != null) {
                         Log.i("REST API", "onResponse: TRANSLATE" + response.body().getData().getTranslations().get(0).getTranslatedText());
                         if (response.body().getData().getTranslations().get(0).getTranslatedText() != null) {
+                            String sourceLocale = response.body().getData().getTranslations().get(0).getDetectedSourceLanguage();
                             String translatedText = response.body().getData().getTranslations().get(0).getTranslatedText();
-                            myToast.showGreen(context, translatedText);
+                            Intent i = new Intent(context, resultScreen.class);
+                            i.putExtra("sourceLocale", sourceLocale);
+                            i.putExtra("sourceText", extractText);
+                            i.putExtra("translatedText", translatedText);
+                            context.startActivity(i);
                         }
 
 

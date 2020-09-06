@@ -54,10 +54,9 @@
     </androidx.cardview.widget.CardView>
 
     <androidx.cardview.widget.CardView
-        android:id="@+id/cardView2"
+        android:id="@+id/viaText"
         android:layout_width="150dp"
         android:layout_height="150dp"
-
         android:layout_gravity="bottom|left"
         android:layout_marginBottom="16dp"
         card_view:cardBackgroundColor="@color/PrimaryDark"

@@ -9,15 +9,19 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.sanjaysgangwar.universaltranslator.R;
 import com.sanjaysgangwar.universaltranslator.serverConnection.serverResponse;
 import com.sanjaysgangwar.universaltranslator.sevices.myToast;
@@ -36,17 +40,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private static String pictureFilePathCheckin = "";
 
-    int viaCamera = 100;
+    int viaCameraCode = 100, viaGalleryCode = 101;
     @BindView(R.id.cameraButton)
     CardView cameraButton;
+    @BindView(R.id.viaText)
+    CardView viaText;
+    @BindView(R.id.viaGallery)
+    CardView viaGallery;
+    @BindView(R.id.viaPhone)
+    CardView viaPhone;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+
+        initListener();
+
+    }
+
+    private void initListener() {
         cameraButton.setOnClickListener(this);
         cameraButton.setOnLongClickListener(this);
+        viaText.setOnClickListener(this);
+        viaText.setOnLongClickListener(this);
+        viaGallery.setOnClickListener(this);
+        viaGallery.setOnLongClickListener(this);
+        viaPhone.setOnClickListener(this);
+        viaPhone.setOnLongClickListener(this);
     }
 
 
@@ -65,14 +87,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Uri photoURI = FileProvider.getUriForFile(this, "com.sanjaysgangwar.universaltranslator.fileprovider", pictureFileCheckin);
         cameraIntent.putExtra(MediaStore.EXTRA_FINISH_ON_COMPLETION, true);
         cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
-        startActivityForResult(cameraIntent, viaCamera);
+        startActivityForResult(cameraIntent, viaCameraCode);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == viaCamera && resultCode == RESULT_OK) {
+        if (requestCode == viaCameraCode && resultCode == RESULT_OK) {
             File imageFile = null;
             imageFile = new File(pictureFilePathCheckin);
 
@@ -82,8 +104,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
-            croper(imageFile);
+            croper(Uri.fromFile(imageFile));
 
+        } else if (requestCode == viaGalleryCode && resultCode == RESULT_OK) {
+            croper(data.getData());
         } else if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
             CropImage.ActivityResult result = CropImage.getActivityResult(data);
             if (resultCode == RESULT_OK) {
@@ -92,29 +116,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Toast.makeText(this, "" + result.getError(), Toast.LENGTH_SHORT).show();
             }
         } else {
-            myToast.showRed(this, "Closed");
+            myToast.showRed(this, "Give it a chance");
         }
     }
 
-    private void croper(File imageFile) {
-        CropImage.activity(Uri.fromFile(imageFile))
+    private void croper(Uri image) {
+        CropImage.activity(image)
                 .setOutputCompressQuality(100)
                 .start(this);
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode) {
-            case 10:
-                try {
-                    cameraOpen();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                break;
-        }
-    }
 
     @Override
     public void onClick(View view) {
@@ -130,6 +141,42 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 } catch (IOException ex) {
                     myToast.showRed(this, "Photo file can't be saved, please try again");
                 }
+                break;
+            case R.id.viaGallery:
+                Intent i = new Intent();
+                i.setType("image/*");
+                i.setAction(Intent.ACTION_GET_CONTENT);
+                startActivityForResult(Intent.createChooser(i, "Select Image"), viaGalleryCode);
+                break;
+            case R.id.viaPhone:
+                Toast.makeText(this, "phone S", Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.viaText:
+
+                MaterialAlertDialogBuilder alert = new MaterialAlertDialogBuilder(MainActivity.this);
+                //view is added to access data from the popUpDialog
+                View Dialogview = getLayoutInflater().inflate(R.layout.popup_translate, null);
+
+                //Components from the view is added
+                final EditText translateText = Dialogview.findViewById(R.id.translateET);
+                Button translateBT = Dialogview.findViewById(R.id.TranslateBT);
+                alert.setView(Dialogview);
+                final AlertDialog alertDialog = alert.create();
+                alertDialog.show();
+                translateBT.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        String dataToTranslate = translateText.getText().toString().trim();
+                        if (dataToTranslate.isEmpty()) {
+                            translateText.setText("Enter Text here");
+                        } else {
+                            alertDialog.dismiss();
+                            serverResponse.translateAPI(dataToTranslate, MainActivity.this);
+                        }
+                    }
+                });
+                break;
+
         }
     }
 
@@ -139,7 +186,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.cameraButton:
                 Toast.makeText(this, "Via Camera", Toast.LENGTH_SHORT).show();
                 break;
+            case R.id.viaGallery:
+                Toast.makeText(this, "Via Gallery", Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.viaPhone:
+                Toast.makeText(this, "Via PhoneScreen", Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.viaText:
+                Toast.makeText(this, "Via Text", Toast.LENGTH_SHORT).show();
+                break;
         }
         return false;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+            case 10:
+                try {
+                    cameraOpen();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                break;
+        }
     }
 }

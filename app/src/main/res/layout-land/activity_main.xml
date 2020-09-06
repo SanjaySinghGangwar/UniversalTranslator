@@ -52,7 +52,7 @@
     </androidx.cardview.widget.CardView>
 
     <androidx.cardview.widget.CardView
-        android:id="@+id/cardView2"
+        android:id="@+id/viaText"
         android:layout_width="100dp"
         android:layout_height="100dp"
 
