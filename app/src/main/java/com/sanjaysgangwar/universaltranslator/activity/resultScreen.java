@@ -1,6 +1,7 @@
 package com.sanjaysgangwar.universaltranslator.activity;
 
-import android.content.Intent;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
@@ -32,6 +33,9 @@ public class resultScreen extends AppCompatActivity implements View.OnClickListe
     @BindView(R.id.translatedLanguageSpeaker)
     ImageView translatedLanguageSpeaker;
     String sourceText, translatedText, sourceLocale;
+    private SharedPreferences sharedPreferences;
+    private SharedPreferences.Editor editor;
+    private String APP_SHARED_PREFS;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +44,7 @@ public class resultScreen extends AppCompatActivity implements View.OnClickListe
         ButterKnife.bind(this);
 
         initListener();
+        sharedPref();
 
 
         Bundle extras = getIntent().getExtras();
@@ -51,21 +56,21 @@ public class resultScreen extends AppCompatActivity implements View.OnClickListe
             translatedLanguageTV.setText(translatedText.trim());
             sourceLanguageTv.setText(sourceText.trim());
         } else {
-            sendToHomeScreen();
+            onBackPressed();
         }
-
-
+        targetLanguage.setText(sharedPreferences.getString("SelectedLanguage", ""));
     }
 
-    private void sendToHomeScreen() {
-        Intent i = new Intent(resultScreen.this, MainActivity.class);
-        startActivity(i);
-        finish();
+    private void sharedPref() {
+        sharedPreferences = this.getSharedPreferences(APP_SHARED_PREFS, Context.MODE_PRIVATE);
+        editor = sharedPreferences.edit();
+        APP_SHARED_PREFS = "Translator";
     }
 
     @Override
     public void onBackPressed() {
-        sendToHomeScreen();
+        super.onBackPressed();
+        finish();
     }
 
     private void initListener() {
