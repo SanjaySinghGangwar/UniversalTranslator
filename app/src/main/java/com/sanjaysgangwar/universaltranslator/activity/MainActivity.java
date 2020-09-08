@@ -77,45 +77,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private SharedPreferences.Editor editor;
     private String APP_SHARED_PREFS;
 
-    public void translateAPI(String extractText) {
-        Retrofit.Builder builder = new Retrofit.Builder()
-                .baseUrl("https://translation.googleapis.com/language/translate/")
-                .addConverterFactory(GsonConverterFactory.create());
-        Retrofit retrofit = builder.build();
-        apiInterface apiInterface = retrofit.create(apiInterface.class);
-        Call<Model> call = apiInterface.translateApi(APIkey, extractText, sharedPreferences.getString("targetLanguage", ""));
-        call.enqueue(new Callback<Model>() {
-            @Override
-            public void onResponse(Call<Model> call, Response<Model> response) {
-                if (response.isSuccessful()) {
-                    if (response.body() != null) {
-                        Log.i("REST API", "onResponse: TRANSLATE" + response.body().getData().getTranslations().get(0).getTranslatedText());
-                        if (response.body().getData().getTranslations().get(0).getTranslatedText() != null) {
-                            String sourceLocale = response.body().getData().getTranslations().get(0).getDetectedSourceLanguage();
-                            String translatedText = response.body().getData().getTranslations().get(0).getTranslatedText();
-                            Intent i = new Intent(MainActivity.this, resultScreen.class);
-                            i.putExtra("sourceLocale", sourceLocale);
-                            i.putExtra("sourceText", extractText);
-                            i.putExtra("translatedText", translatedText);
-                            startActivity(i);
-                        }
-
-
-                    }
-
-
-                }
-            }
-
-            @Override
-            public void onFailure(Call<Model> call, Throwable t) {
-                Log.i("API TRANSLATE", "onFailure: " + t);
-                myToast.showRed(MainActivity.this, "Try again " + t.getLocalizedMessage());
-            }
-        });
-
-
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -207,7 +168,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                         ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA}, 10);
                     } else {
-                        cameraOpen();
+                        if (sharedPreferences.getString("SelectedLanguage", "").isEmpty()) {
+                            dialogForLanguage();
+                        } else {
+                            cameraOpen();
+                        }
                     }
 
                 } catch (IOException ex) {
@@ -215,26 +180,482 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;
             case R.id.viaGallery:
-                Intent i = new Intent();
-                i.setType("image/*");
-                i.setAction(Intent.ACTION_GET_CONTENT);
-                startActivityForResult(Intent.createChooser(i, "Select Image"), viaGalleryCode);
+                if (sharedPreferences.getString("SelectedLanguage", "").isEmpty()) {
+                    dialogForLanguage();
+                } else {
+                    Intent i = new Intent();
+                    i.setType("image/*");
+                    i.setAction(Intent.ACTION_GET_CONTENT);
+                    startActivityForResult(Intent.createChooser(i, "Select Image"), viaGalleryCode);
+                }
                 break;
             case R.id.viaPhone:
-                Toast.makeText(this, "phone S", Toast.LENGTH_SHORT).show();
+                if (sharedPreferences.getString("SelectedLanguage", "").isEmpty()) {
+                    dialogForLanguage();
+                } else {
+                    Toast.makeText(this, "phone S", Toast.LENGTH_SHORT).show();
+                }
                 break;
             case R.id.viaText:
 
                 MaterialAlertDialogBuilder alert = new MaterialAlertDialogBuilder(MainActivity.this);
-                //view is added to access data from the popUpDialog
                 View Dialogview = getLayoutInflater().inflate(R.layout.popup_translate, null);
-
                 //Components from the view is added
                 final EditText translateText = Dialogview.findViewById(R.id.translateET);
                 Button translateBT = Dialogview.findViewById(R.id.TranslateBT);
                 alert.setView(Dialogview);
                 final AlertDialog alertDialog = alert.create();
                 alertDialog.show();
+                SearchableSpinner searchableSpinner = Dialogview.findViewById(R.id.languageSpinner);
+                searchableSpinner.setTitle("Select language in which it has to converted");
+                searchableSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                        switch (i) {
+                            case 0:
+                                targetLanguage = "af";
+                                languageSelected = "Afrikaans";
+                                break;
+                            case 1:
+                                targetLanguage = "sq";
+                                languageSelected = "Albanian";
+                                break;
+                            case 2:
+                                targetLanguage = "am";
+                                languageSelected = "Amharic";
+                                break;
+                            case 3:
+                                targetLanguage = "ar";
+                                languageSelected = "Arabic";
+                                break;
+                            case 4:
+                                targetLanguage = "hy";
+                                languageSelected = "Armenian";
+                                break;
+                            case 5:
+                                targetLanguage = "az";
+                                languageSelected = "Azerbaijani";
+                                break;
+                            case 6:
+                                targetLanguage = "eu";
+                                languageSelected = "Basque";
+                                break;
+                            case 7:
+                                targetLanguage = "be";
+                                languageSelected = "Belarusian";
+                                break;
+                            case 8:
+                                targetLanguage = "bn";
+                                languageSelected = "Bengali";
+                                break;
+                            case 9:
+                                targetLanguage = "bs";
+                                languageSelected = "Bosnian";
+                                break;
+                            case 10:
+                                targetLanguage = "bg";
+                                languageSelected = "Bulgarian";
+                                break;
+                            case 11:
+                                targetLanguage = "ca";
+                                languageSelected = "Catalan";
+                                break;
+                            case 12:
+                                targetLanguage = "ceb";
+                                languageSelected = "Cebuano";
+                                break;
+                            case 13:
+                                targetLanguage = "zh-CN";
+                                languageSelected = "Chinese (Simplified)";
+                                break;
+                            case 14:
+                                targetLanguage = "zh-TW";
+                                languageSelected = "Chinese (Traditional)";
+                                break;
+                            case 15:
+                                targetLanguage = "co";
+                                languageSelected = "Corsican";
+                                break;
+                            case 16:
+                                targetLanguage = "hr";
+                                languageSelected = "Croatian";
+                                break;
+                            case 17:
+                                targetLanguage = "cs";
+                                languageSelected = "Czech";
+                                break;
+                            case 18:
+                                targetLanguage = "da";
+                                languageSelected = "Danish";
+                                break;
+                            case 19:
+                                targetLanguage = "nl";
+                                languageSelected = "Dutch";
+                                break;
+                            case 20:
+                                targetLanguage = "en";
+                                languageSelected = "English";
+                                break;
+                            case 21:
+                                targetLanguage = "eo";
+                                languageSelected = "Esperanto";
+                                break;
+                            case 22:
+                                targetLanguage = "et";
+                                languageSelected = "Estonian";
+                                break;
+                            case 23:
+                                targetLanguage = "fi";
+                                languageSelected = "Finnish";
+                                break;
+                            case 24:
+                                targetLanguage = "fr";
+                                languageSelected = "French";
+                                break;
+                            case 25:
+                                targetLanguage = "fy";
+                                languageSelected = "Frisian";
+                                break;
+                            case 26:
+                                targetLanguage = "gl";
+                                languageSelected = "Galician";
+                                break;
+                            case 27:
+                                targetLanguage = "ka";
+                                languageSelected = "Georgian";
+                                break;
+                            case 28:
+                                targetLanguage = "de";
+                                languageSelected = "German";
+                                break;
+                            case 29:
+                                targetLanguage = "el";
+                                languageSelected = "Greek";
+                                break;
+                            case 30:
+                                targetLanguage = "gu";
+                                languageSelected = "Gujarati";
+                                break;
+                            case 31:
+                                targetLanguage = "ht";
+                                languageSelected = "Haitian Creole";
+                                break;
+                            case 32:
+                                targetLanguage = "ha";
+                                languageSelected = "Hausa";
+                                break;
+                            case 33:
+                                targetLanguage = "haw";
+                                languageSelected = "Hawaiian";
+                                break;
+                            case 34:
+                                targetLanguage = "he";
+                                languageSelected = "Hebrew";
+                                break;
+                            case 35:
+                                targetLanguage = "hi";
+                                languageSelected = "Hindi";
+                                break;
+                            case 36:
+                                targetLanguage = "hmn";
+                                languageSelected = "Hmong";
+                                break;
+                            case 37:
+                                targetLanguage = "hu";
+                                languageSelected = "Hungarian";
+                                break;
+                            case 38:
+                                targetLanguage = "is";
+                                languageSelected = "Icelandic";
+                                break;
+                            case 39:
+                                targetLanguage = "ig";
+                                languageSelected = "Igbo";
+                                break;
+                            case 40:
+                                targetLanguage = "id";
+                                languageSelected = "Indonesian";
+                                break;
+                            case 41:
+                                targetLanguage = "ga";
+                                languageSelected = "Irish";
+                                break;
+                            case 42:
+                                targetLanguage = "it";
+                                languageSelected = "Italian";
+                                break;
+                            case 43:
+                                targetLanguage = "ja";
+                                languageSelected = "Javanese";
+                                break;
+                            case 44:
+                                targetLanguage = "jv";
+                                languageSelected = "Javanese";
+                                break;
+                            case 45:
+                                targetLanguage = "kn";
+                                languageSelected = "Kannada";
+                                break;
+                            case 46:
+                                targetLanguage = "kk";
+                                languageSelected = "Kazakh";
+                                break;
+                            case 47:
+                                targetLanguage = "km";
+                                languageSelected = "Khmer";
+                                break;
+                            case 48:
+                                targetLanguage = "rw";
+                                languageSelected = "Kinyarwanda";
+                                break;
+                            case 49:
+                                targetLanguage = "ko";
+                                languageSelected = "Korean";
+                                break;
+                            case 50:
+                                targetLanguage = "ku";
+                                languageSelected = "Kurdish";
+                                break;
+                            case 51:
+                                targetLanguage = "ky";
+                                languageSelected = "Kyrgyz";
+                                break;
+                            case 52:
+                                targetLanguage = "lo";
+                                languageSelected = "Lao";
+                                break;
+                            case 53:
+                                targetLanguage = "la";
+                                languageSelected = "Latin";
+                                break;
+                            case 54:
+                                targetLanguage = "lv";
+                                languageSelected = "Latvian";
+                                break;
+                            case 55:
+                                targetLanguage = "lt";
+                                languageSelected = "Lithuanian";
+                                break;
+                            case 56:
+                                targetLanguage = "lb";
+                                languageSelected = "Luxembourgish";
+                                break;
+                            case 57:
+                                targetLanguage = "mk";
+                                languageSelected = "Macedonian";
+                                break;
+                            case 58:
+                                targetLanguage = "mg";
+                                languageSelected = "Malagasy";
+                                break;
+                            case 59:
+                                targetLanguage = "ms";
+                                languageSelected = "Malay";
+                                break;
+                            case 60:
+                                targetLanguage = "ml";
+                                languageSelected = "Malayalam";
+                                break;
+                            case 61:
+                                targetLanguage = "mt";
+                                languageSelected = "Maltese";
+                                break;
+                            case 62:
+                                targetLanguage = "mi";
+                                languageSelected = "Maori";
+                                break;
+                            case 63:
+                                targetLanguage = "mr";
+                                languageSelected = "Marathi";
+                                break;
+                            case 64:
+                                targetLanguage = "mn";
+                                languageSelected = "Mongolian";
+                                break;
+                            case 65:
+                                targetLanguage = "my";
+                                languageSelected = "Myanmar (Burmese)";
+                                break;
+                            case 66:
+                                targetLanguage = "ne";
+                                languageSelected = "Nepali";
+                                break;
+                            case 67:
+                                targetLanguage = "no";
+                                languageSelected = "Norwegian";
+                                break;
+                            case 68:
+                                targetLanguage = "ny";
+                                languageSelected = "Nyanja (Chichewa)";
+                                break;
+                            case 69:
+                                targetLanguage = "or";
+                                languageSelected = "Odia (Oriya)";
+                                break;
+                            case 70:
+                                targetLanguage = "ps";
+                                languageSelected = "Pashto";
+                                break;
+                            case 71:
+                                targetLanguage = "fa";
+                                languageSelected = "Persian";
+                                break;
+                            case 72:
+                                targetLanguage = "pl";
+                                languageSelected = "Polish";
+                                break;
+                            case 73:
+                                targetLanguage = "pt";
+                                languageSelected = "Portuguese (Portugal, Brazil)";
+                                break;
+                            case 74:
+                                targetLanguage = "pa";
+                                languageSelected = "Punjabi";
+                                break;
+                            case 75:
+                                targetLanguage = "ro";
+                                languageSelected = "Romanian";
+                                break;
+                            case 76:
+                                targetLanguage = "ru";
+                                languageSelected = "Russian";
+                                break;
+                            case 77:
+                                targetLanguage = "sm";
+                                languageSelected = "Samoan";
+                                break;
+                            case 78:
+                                targetLanguage = "gd";
+                                languageSelected = "Scots Gaelic";
+                                break;
+                            case 79:
+                                targetLanguage = "sr";
+                                languageSelected = "Serbian";
+                                break;
+                            case 80:
+                                targetLanguage = "st";
+                                languageSelected = "Sesotho";
+                                break;
+                            case 81:
+                                targetLanguage = "sn";
+                                languageSelected = "Shona";
+                                break;
+                            case 82:
+                                targetLanguage = "sd";
+                                languageSelected = "Sindhi";
+                                break;
+                            case 83:
+                                targetLanguage = "si";
+                                languageSelected = "Sinhala (Sinhalese)";
+                                break;
+                            case 84:
+                                targetLanguage = "sk";
+                                languageSelected = "Slovak";
+                                break;
+                            case 85:
+                                targetLanguage = "sl";
+                                languageSelected = "Slovenian";
+                                break;
+                            case 86:
+                                targetLanguage = "so";
+                                languageSelected = "Somali";
+                                break;
+                            case 87:
+                                targetLanguage = "es";
+                                languageSelected = "Spanish";
+                                break;
+                            case 88:
+                                targetLanguage = "su";
+                                languageSelected = "Sundanese";
+                                break;
+                            case 89:
+                                targetLanguage = "sw";
+                                languageSelected = "Swahili";
+                                break;
+                            case 90:
+                                targetLanguage = "sv";
+                                languageSelected = "Swedish";
+                                break;
+                            case 91:
+                                targetLanguage = "tl";
+                                languageSelected = "Tagalog (Filipino)";
+                                break;
+                            case 92:
+                                targetLanguage = "tg";
+                                languageSelected = "Tajik";
+                                break;
+                            case 93:
+                                targetLanguage = "ta";
+                                languageSelected = "Tamil";
+                                break;
+                            case 94:
+                                targetLanguage = "tt";
+                                languageSelected = "Tatar";
+                                break;
+                            case 95:
+                                targetLanguage = "te";
+                                languageSelected = "Telugu";
+                                break;
+                            case 96:
+                                targetLanguage = "th";
+                                languageSelected = "Thai";
+                                break;
+                            case 97:
+                                targetLanguage = "tr";
+                                languageSelected = "Turkish";
+                                break;
+                            case 98:
+                                targetLanguage = "tk";
+                                languageSelected = "Turkmen";
+                                break;
+                            case 99:
+                                targetLanguage = "uk";
+                                languageSelected = "Ukrainian";
+                                break;
+                            case 100:
+                                targetLanguage = "ur";
+                                languageSelected = "Urdu";
+                                break;
+                            case 101:
+                                targetLanguage = "ug";
+                                languageSelected = "Uyghur";
+                                break;
+                            case 102:
+                                targetLanguage = "uz";
+                                languageSelected = "Uzbek";
+                                break;
+                            case 103:
+                                targetLanguage = "vi";
+                                languageSelected = "Vietnamese";
+                                break;
+                            case 104:
+                                targetLanguage = "cy";
+                                languageSelected = "Welsh";
+                                break;
+                            case 105:
+                                targetLanguage = "xh";
+                                languageSelected = "Xhosa";
+                                break;
+                            case 106:
+                                targetLanguage = "yi";
+                                languageSelected = "Yiddish";
+                                break;
+                            case 107:
+                                targetLanguage = "yo";
+                                languageSelected = "Yoruba";
+                                break;
+                            case 108:
+                                targetLanguage = "zu";
+                                languageSelected = "Zulu";
+                                break;
+                        }
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> adapterView) {
+
+                    }
+                });
                 translateBT.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
@@ -243,7 +664,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             translateText.setText("Enter Text here");
                         } else {
                             alertDialog.dismiss();
-                            translateAPI(dataToTranslate);
+                            translateAPI(dataToTranslate, targetLanguage, languageSelected);
                         }
                     }
                 });
@@ -794,10 +1215,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode) {
             case 10:
-                try {
-                    cameraOpen();
-                } catch (IOException e) {
-                    e.printStackTrace();
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    try {
+                        cameraOpen();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
                 break;
         }
@@ -844,7 +1267,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             if (response.body() != null) {
                                 try {
                                     String extractText = response.body().getResponses().get(0).getFullTextAnnotation().getText();
-                                    translateAPI(extractText);
+                                    translateAPI(extractText, sharedPreferences.getString("targetLanguage", ""), sharedPreferences.getString("SelectedLanguage", ""));
                                 } catch (Exception e) {
                                     myToast.showRed(MainActivity.this, e.getMessage());
                                 }
@@ -867,5 +1290,46 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             e.printStackTrace();
             myToast.showRed(MainActivity.this, e.getMessage());
         }
+    }
+
+    public void translateAPI(String extractText, String targetLanguage, String languageSelected) {
+        Retrofit.Builder builder = new Retrofit.Builder()
+                .baseUrl("https://translation.googleapis.com/language/translate/")
+                .addConverterFactory(GsonConverterFactory.create());
+        Retrofit retrofit = builder.build();
+        apiInterface apiInterface = retrofit.create(apiInterface.class);
+        Call<Model> call = apiInterface.translateApi(APIkey, extractText, targetLanguage);
+        call.enqueue(new Callback<Model>() {
+            @Override
+            public void onResponse(Call<Model> call, Response<Model> response) {
+                if (response.isSuccessful()) {
+                    if (response.body() != null) {
+                        Log.i("REST API", "onResponse: TRANSLATE" + response.body().getData().getTranslations().get(0).getTranslatedText());
+                        if (response.body().getData().getTranslations().get(0).getTranslatedText() != null) {
+                            String sourceLocale = response.body().getData().getTranslations().get(0).getDetectedSourceLanguage();
+                            String translatedText = response.body().getData().getTranslations().get(0).getTranslatedText();
+                            Intent i = new Intent(MainActivity.this, resultScreen.class);
+                            i.putExtra("sourceLocale", sourceLocale);
+                            i.putExtra("sourceText", extractText);
+                            i.putExtra("translatedText", translatedText);
+                            i.putExtra("languageSelected", languageSelected);
+                            startActivity(i);
+                        }
+
+
+                    }
+
+
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Model> call, Throwable t) {
+                Log.i("API TRANSLATE", "onFailure: " + t);
+                myToast.showRed(MainActivity.this, "Try again " + t.getLocalizedMessage());
+            }
+        });
+
+
     }
 }

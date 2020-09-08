@@ -16,6 +16,16 @@
         android:textSize="18dp"
         android:textStyle="bold" />
 
+    <com.toptoche.searchablespinnerlibrary.SearchableSpinner
+        android:id="@+id/languageSpinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginRight="10dp"
+        android:animateLayoutChanges="true"
+        android:entries="@array/list" />
+
     <com.google.android.material.textfield.TextInputLayout
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"

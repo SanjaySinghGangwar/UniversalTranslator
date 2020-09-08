@@ -3,6 +3,8 @@ package com.sanjaysgangwar.universaltranslator.activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -12,6 +14,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
 import com.sanjaysgangwar.universaltranslator.R;
+
+import java.util.Locale;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -32,10 +36,11 @@ public class resultScreen extends AppCompatActivity implements View.OnClickListe
     TextView translatedLanguageTV;
     @BindView(R.id.translatedLanguageSpeaker)
     ImageView translatedLanguageSpeaker;
-    String sourceText, translatedText, sourceLocale;
+    String sourceText, translatedText, sourceLocale, languageSelected;
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
     private String APP_SHARED_PREFS;
+    TextToSpeech tss;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,13 +57,33 @@ public class resultScreen extends AppCompatActivity implements View.OnClickListe
             sourceText = extras.getString("sourceText");
             translatedText = extras.getString("translatedText");
             sourceLocale = extras.getString("sourceLocale");
-            sourceLanguage.setText(sourceLocale.trim());
+            languageSelected = extras.getString("languageSelected");
+            sourceLanguage.append(sourceLocale.trim());
             translatedLanguageTV.setText(translatedText.trim());
             sourceLanguageTv.setText(sourceText.trim());
+            targetLanguage.setText(languageSelected);
         } else {
             onBackPressed();
         }
-        targetLanguage.setText(sharedPreferences.getString("SelectedLanguage", ""));
+
+        tss = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if (status == TextToSpeech.SUCCESS) {
+                    int lang = tss.setLanguage(Locale.getDefault());
+                    tss.setVoice(tss.getVoice());
+                    tss.setPitch(1);
+                    tss.setSpeechRate(0.9f);
+                    if (lang == TextToSpeech.LANG_MISSING_DATA
+                            || lang == TextToSpeech.LANG_NOT_SUPPORTED) {
+                        Toast.makeText(resultScreen.this, "Not supported", Toast.LENGTH_SHORT).show();
+                        Log.e("TTS", "Language not supported");
+                    }
+                } else {
+                    Log.e("TTS", "Initialization failed");
+                }
+            }
+        });
     }
 
     private void sharedPref() {
@@ -84,10 +109,24 @@ public class resultScreen extends AppCompatActivity implements View.OnClickListe
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.extractedSourceLanguageSpeaker:
-                Toast.makeText(this, "sourceLanguage", Toast.LENGTH_SHORT).show();
+                if (tss != null) {
+                    if (tss.isSpeaking()) {
+                        tss.stop();
+                    } else {
+                        tss.speak(sourceText, TextToSpeech.QUEUE_FLUSH, null);
+
+                    }
+                }
                 break;
             case R.id.translatedLanguageSpeaker:
-                Toast.makeText(this, "Translated", Toast.LENGTH_SHORT).show();
+                if (tss != null) {
+                    if (tss.isSpeaking()) {
+                        tss.stop();
+                    } else {
+                        tss.speak(translatedText, TextToSpeech.QUEUE_FLUSH, null);
+
+                    }
+                }
                 break;
         }
     }
