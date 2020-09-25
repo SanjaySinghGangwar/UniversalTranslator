@@ -1,10 +1,10 @@
 <resources>
-    <string name="app_name">Universal Translator</string>
+    <string name="app_name">Translator</string>
     <string-array name="list">
         <item> Afrikaans</item>
         <item> Albanian</item>
         <item> Amharic</item>
-        <item>Arabic</item>
+        <item> Arabic</item>
         <item> Armenian</item>
         <item> Azerbaijani	</item>
         <item> Basque</item>
@@ -12,9 +12,9 @@
         <item> Bengali</item>
         <item> Bosnian</item>
         <item> Bulgarian</item>
-        <item>Catalan</item>
-        <item>Cebuano</item>
-        <item>Chinese </item>
+        <item> Catalan</item>
+        <item> Cebuano</item>
+        <item> Chinese </item>
         <item> Chinese </item>
         <item> Corsican</item>
         <item> Croatian</item>
@@ -25,7 +25,7 @@
         <item> Esperanto</item>
         <item> Estonian</item>
         <item> Finnish</item>
-        <item>French</item>
+        <item> French</item>
         <item> Frisian	</item>
         <item> Galician	</item>
         <item> Georgian</item>
@@ -40,11 +40,11 @@
         <item> Hmong	</item>
         <item> Hungarian</item>
         <item> Icelandic	</item>
-        <item>Igbo	</item>
-        <item>Indonesian</item>
-        <item>Irish</item>
-        <item>Italian</item>
-        <item>Japanese	</item>
+        <item> Igbo	</item>
+        <item> Indonesian</item>
+        <item> Irish</item>
+        <item> Italian</item>
+        <item> Japanese	</item>
         <item> Javanese	</item>
         <item> Kannada	</item>
         <item> Kazakh</item>
@@ -52,35 +52,35 @@
         <item> Kinyarwanda</item>
         <item> Korean</item>
         <item> Kurdish	</item>
-        <item>Kyrgyz</item>
-        <item>Lao	</item>
-        <item>Latin	</item>
-        <item>Latvian	</item>
+        <item> Kyrgyz</item>
+        <item> Lao	</item>
+        <item> Latin	</item>
+        <item> Latvian	</item>
         <item> Lithuanian	</item>
         <item> Luxembourgish</item>
-        <item>Macedonian	</item>
+        <item> Macedonian	</item>
         <item> Malagasy</item>
-        <item>Malay</item>
-        <item>Malayalam	</item>
+        <item> Malay</item>
+        <item> Malayalam	</item>
         <item> Maltese</item>
         <item> Maori	</item>
         <item> Marathi	</item>
         <item> Mongolian</item>
         <item> Myanmar (Burmese)</item>
-        <item>Nepali	</item>
-        <item>Norwegian</item>
+        <item> Nepali	</item>
+        <item> Norwegian</item>
         <item> Nyanja (Chichewa)</item>
-        <item>  Odia (Oriya)	</item>
-        <item>  Pashto	</item>
-        <item>  Persian</item>
+        <item> Odia (Oriya)	</item>
+        <item> Pashto	</item>
+        <item> Persian</item>
         <item> Polish	</item>
-        <item>  Portuguese (Portugal, Brazil)	</item>
+        <item> Portuguese (Portugal, Brazil)	</item>
         <item> Punjabi	</item>
         <item> Romanian</item>
         <item> Russian</item>
         <item> Samoan	</item>
         <item> Scots Gaelic</item>
-        <item>  Serbian</item>
+        <item> Serbian</item>
         <item> Sesotho</item>
         <item> Shona	</item>
         <item> Sindhi</item>
@@ -101,13 +101,13 @@
         <item> Turkish</item>
         <item> Turkmen	</item>
         <item> Ukrainian</item>
-        <item>Urdu	</item>
+        <item> Urdu	</item>
         <item> Uyghur	</item>
-        <item>Vietnamese	</item>
-        <item>Welsh	</item>
-        <item>Xhosa	</item>
+        <item> Vietnamese	</item>
+        <item> Welsh	</item>
+        <item> Xhosa	</item>
         <item> Yiddish</item>
-        <item>Yoruba	</item>
+        <item> Yoruba	</item>
         <item> Zulu</item>
 
 

@@ -35,6 +35,7 @@ import com.sanjaysgangwar.universaltranslator.R;
 import com.sanjaysgangwar.universaltranslator.api.apiInterface;
 import com.sanjaysgangwar.universaltranslator.modelClasses.translateModel.Model;
 import com.sanjaysgangwar.universaltranslator.modelClasses.visionModel.VisionModel;
+import com.sanjaysgangwar.universaltranslator.sevices.myProgressView;
 import com.sanjaysgangwar.universaltranslator.sevices.myToast;
 import com.sanjaysgangwar.universaltranslator.sevices.utils;
 import com.theartofdev.edmodo.cropper.CropImage;
@@ -73,10 +74,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     CardView viaPhone;
     String languageSelected;
     String targetLanguage;
+    myProgressView myProgressView;
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
     private String APP_SHARED_PREFS;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,6 +87,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         initListener();
         sharedPref();
+        myProgressView = new myProgressView(this);
+
 
     }
 
@@ -145,7 +148,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } else if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
             CropImage.ActivityResult result = CropImage.getActivityResult(data);
             if (resultCode == RESULT_OK) {
-                sentImageToGoogleServer(new File(result.getUri().getPath()));
+                if (utils.networkIsOnline(this)) {
+                    sentImageToGoogleServer(new File(result.getUri().getPath()));
+                } else {
+                    myToast.showRed(this, "No Internet Connection");
+                }
             } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
                 Toast.makeText(this, "" + result.getError(), Toast.LENGTH_SHORT).show();
             }
@@ -197,7 +204,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;
             case R.id.viaText:
-
                 MaterialAlertDialogBuilder alert = new MaterialAlertDialogBuilder(MainActivity.this);
                 View Dialogview = getLayoutInflater().inflate(R.layout.popup_translate, null);
                 //Components from the view is added
@@ -664,7 +670,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             translateText.setText("Enter Text here");
                         } else {
                             alertDialog.dismiss();
-                            translateAPI(dataToTranslate, targetLanguage, languageSelected);
+                            if (utils.networkIsOnline(MainActivity.this)) {
+                                translateAPI(dataToTranslate, targetLanguage, languageSelected);
+                            } else {
+                                myToast.showRed(MainActivity.this, "No Internet Connection");
+                            }
+
                         }
                     }
                 });
@@ -1227,6 +1238,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public void sentImageToGoogleServer(File absoluteFile) {
+        myProgressView.showLoader();
         try {
             File f = new File(String.valueOf((absoluteFile)));
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -1269,30 +1281,49 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     String extractText = response.body().getResponses().get(0).getFullTextAnnotation().getText();
                                     translateAPI(extractText, sharedPreferences.getString("targetLanguage", ""), sharedPreferences.getString("SelectedLanguage", ""));
                                 } catch (Exception e) {
+                                    if (myProgressView.isShowing()) {
+                                        myProgressView.hideLoader();
+                                    }
                                     myToast.showRed(MainActivity.this, e.getMessage());
                                 }
 
+                            }
+                            if (myProgressView.isShowing()) {
+                                myProgressView.hideLoader();
                             }
                         }
                     }
 
                     @Override
                     public void onFailure(Call<VisionModel> call, Throwable t) {
+                        if (myProgressView.isShowing()) {
+                            myProgressView.hideLoader();
+                        }
                         myToast.showRed(MainActivity.this, t.getMessage());
                     }
                 });
             } else {
+                if (myProgressView.isShowing()) {
+                    myProgressView.hideLoader();
+                }
                 myToast.showRed(MainActivity.this, "No internet Connection");
             }
 
 
         } catch (Exception e) {
+            if (myProgressView.isShowing()) {
+                myProgressView.hideLoader();
+            }
             e.printStackTrace();
             myToast.showRed(MainActivity.this, e.getMessage());
         }
     }
 
     public void translateAPI(String extractText, String targetLanguage, String languageSelected) {
+        if (myProgressView.isShowing()) {
+        } else {
+            myProgressView.showLoader();
+        }
         Retrofit.Builder builder = new Retrofit.Builder()
                 .baseUrl("https://translation.googleapis.com/language/translate/")
                 .addConverterFactory(GsonConverterFactory.create());
@@ -1321,10 +1352,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
                 }
+                if (myProgressView.isShowing()) {
+                    myProgressView.hideLoader();
+                }
             }
 
             @Override
             public void onFailure(Call<Model> call, Throwable t) {
+                if (myProgressView.isShowing()) {
+                    myProgressView.hideLoader();
+                }
                 Log.i("API TRANSLATE", "onFailure: " + t);
                 myToast.showRed(MainActivity.this, "Try again " + t.getLocalizedMessage());
             }

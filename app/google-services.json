@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "55072894534",
+    "firebase_url": "https://translator-ee7a1.firebaseio.com",
+    "project_id": "translator-ee7a1",
+    "storage_bucket": "translator-ee7a1.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:55072894534:android:c21cd75647cbc6ba306447",
+        "android_client_info": {
+          "package_name": "com.sanjaysgangwar.universaltranslator"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "55072894534-o4mv78b0n73i9s1snshb55ipnv1no6tt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyADkNXHDnnXF9VY4rxLRfG5glbSsR_7hAU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "55072894534-o4mv78b0n73i9s1snshb55ipnv1no6tt.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

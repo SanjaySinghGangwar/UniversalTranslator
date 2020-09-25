@@ -39,6 +39,7 @@
                 card_view:srcCompat="@drawable/camera" />
 
             <TextView
+                android:fontFamily="@font/myfont_regular"
                 android:layout_width="match_parent"
 
                 android:layout_height="wrap_content"
@@ -84,6 +85,7 @@
                 card_view:srcCompat="@drawable/text" />
 
             <TextView
+                android:fontFamily="@font/myfont_regular"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom|right"
@@ -126,6 +128,7 @@
                 card_view:srcCompat="@drawable/gallery" />
 
             <TextView
+                android:fontFamily="@font/myfont_regular"
                 android:layout_width="match_parent"
 
                 android:layout_height="wrap_content"
@@ -169,6 +172,7 @@
                 card_view:srcCompat="@drawable/screen" />
 
             <TextView
+                android:fontFamily="@font/myfont_regular"
                 android:layout_width="match_parent"
 
                 android:layout_height="wrap_content"

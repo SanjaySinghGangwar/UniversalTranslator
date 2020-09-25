@@ -14,6 +14,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
 import com.sanjaysgangwar.universaltranslator.R;
+import com.sanjaysgangwar.universaltranslator.sevices.myProgressView;
+import com.sanjaysgangwar.universaltranslator.sevices.myToast;
 
 import java.util.Locale;
 
@@ -37,10 +39,11 @@ public class resultScreen extends AppCompatActivity implements View.OnClickListe
     @BindView(R.id.translatedLanguageSpeaker)
     ImageView translatedLanguageSpeaker;
     String sourceText, translatedText, sourceLocale, languageSelected;
+    TextToSpeech tss;
+    myProgressView myProgressView;
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
     private String APP_SHARED_PREFS;
-    TextToSpeech tss;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,7 +53,7 @@ public class resultScreen extends AppCompatActivity implements View.OnClickListe
 
         initListener();
         sharedPref();
-
+        myProgressView = new myProgressView(this);
 
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
@@ -62,15 +65,17 @@ public class resultScreen extends AppCompatActivity implements View.OnClickListe
             translatedLanguageTV.setText(translatedText.trim());
             sourceLanguageTv.setText(sourceText.trim());
             targetLanguage.setText(languageSelected);
+            if (myProgressView.isShowing()) {
+                myProgressView.hideLoader();
+            }
         } else {
             onBackPressed();
         }
 
-        tss = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
-            @Override
-            public void onInit(int status) {
-                if (status == TextToSpeech.SUCCESS) {
-                    int lang = tss.setLanguage(Locale.getDefault());
+        tss = new TextToSpeech(this, status -> {
+            if (status == TextToSpeech.SUCCESS) {
+                int lang = tss.setLanguage(Locale.getDefault());
+                if (tss != null) {
                     tss.setVoice(tss.getVoice());
                     tss.setPitch(1);
                     tss.setSpeechRate(0.9f);
@@ -80,8 +85,11 @@ public class resultScreen extends AppCompatActivity implements View.OnClickListe
                         Log.e("TTS", "Language not supported");
                     }
                 } else {
-                    Log.e("TTS", "Initialization failed");
+                    myToast.showRed(resultScreen.this, "Not Supported");
                 }
+
+            } else {
+                Log.e("TTS", "Initialization failed");
             }
         });
     }
