@@ -57,7 +57,6 @@
         android:id="@+id/viaText"
         android:layout_width="100dp"
         android:layout_height="100dp"
-
         android:layout_gravity="bottom|left"
         android:layout_marginBottom="16dp"
         card_view:cardBackgroundColor="@color/PrimaryDark"
