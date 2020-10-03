@@ -1,20 +1,25 @@
 package com.sanjaysgangwar.universaltranslator.activity;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
@@ -26,6 +31,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -35,6 +41,7 @@ import com.sanjaysgangwar.universaltranslator.R;
 import com.sanjaysgangwar.universaltranslator.api.apiInterface;
 import com.sanjaysgangwar.universaltranslator.modelClasses.translateModel.Model;
 import com.sanjaysgangwar.universaltranslator.modelClasses.visionModel.VisionModel;
+import com.sanjaysgangwar.universaltranslator.sevices.chatHeadService;
 import com.sanjaysgangwar.universaltranslator.sevices.myProgressView;
 import com.sanjaysgangwar.universaltranslator.sevices.myToast;
 import com.sanjaysgangwar.universaltranslator.sevices.utils;
@@ -50,6 +57,7 @@ import java.io.IOException;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import jp.co.recruit_lifestyle.android.floatingview.FloatingViewManager;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -63,7 +71,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private static String pictureFilePathCheckin = "";
 
-    int viaCameraCode = 100, viaGalleryCode = 101;
+    int viaCameraCode = 100, viaGalleryCode = 101, chatHead = 102;
     @BindView(R.id.cameraButton)
     CardView cameraButton;
     @BindView(R.id.viaText)
@@ -156,6 +164,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
                 Toast.makeText(this, "" + result.getError(), Toast.LENGTH_SHORT).show();
             }
+        } else if (requestCode == chatHead && resultCode == RESULT_OK) {
+            openChatHead();
         } else {
             myToast.showRed(this, "Give it a chance");
         }
@@ -200,7 +210,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (sharedPreferences.getString("SelectedLanguage", "").isEmpty()) {
                     dialogForLanguage();
                 } else {
-                    Toast.makeText(this, "phone S", Toast.LENGTH_SHORT).show();
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+                        Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                Uri.parse("package:" + getPackageName()));
+                        startActivityForResult(intent, chatHead);
+                    } else {
+                        openChatHead();
+                    }
                 }
                 break;
             case R.id.viaText:
@@ -683,6 +699,38 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         }
     }
+
+    private void openChatHead() {
+        showFloatingView(MainActivity.this, true, false);
+        //startService(new Intent(MainActivity.this, ChatHeadService.class));
+        //finish();
+    }
+
+    private void showFloatingView(Activity activity, boolean isShowOverlayPermission, boolean isCustomFloatingView) {
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            startFloatingViewService(this, isCustomFloatingView);
+            return;
+        }
+        if (Settings.canDrawOverlays(activity)) {
+            startFloatingViewService(this, isCustomFloatingView);
+            return;
+        }
+    }
+
+    private void startFloatingViewService(Activity activity, boolean isCustomFloatingView) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            if (activity.getWindow().getAttributes().layoutInDisplayCutoutMode == WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER) {
+                throw new RuntimeException("'windowLayoutInDisplayCutoutMode' do not be set to 'never'");
+            }
+            if (activity.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                throw new RuntimeException("Do not set Activity to landscape");
+            }
+        }
+        Intent intent = new Intent(activity, chatHeadService.class);
+        intent.putExtra(chatHeadService.EXTRA_CUTOUT_SAFE_AREA, FloatingViewManager.findCutoutSafeArea(activity));
+        ContextCompat.startForegroundService(activity, intent);
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
