@@ -14,16 +14,16 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.hardware.display.VirtualDisplay;
-import android.media.MediaScannerConnection;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
-import android.os.Looper;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -38,8 +38,6 @@ import androidx.core.app.NotificationCompat;
 
 import com.sanjaysgangwar.universaltranslator.R;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -49,6 +47,7 @@ import jp.co.recruit_lifestyle.android.floatingview.FloatingViewListener;
 import jp.co.recruit_lifestyle.android.floatingview.FloatingViewManager;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static com.sanjaysgangwar.universaltranslator.sevices.Storage.saveToDataDir;
 
 public class chatHeadService extends Service implements FloatingViewListener {
     public static final String EXTRA_CUTOUT_SAFE_AREA = "cutout_safe_area";
@@ -133,7 +132,9 @@ public class chatHeadService extends Service implements FloatingViewListener {
                     if (defaultHomePackageName.equalsIgnoreCase(currentForegroundPackageName)) {
                         Toast.makeText(context, "Open app where I have to read", Toast.LENGTH_LONG).show();
                     } else {
-                        Toast.makeText(context, "To Be added soon", Toast.LENGTH_SHORT).show();
+                        Bitmap b = Screenshot.takescreenshotOfRootView(v);
+                        Uri uri = saveToDataDir(this, b, "Screenshot");
+                        Toast.makeText(context, "" + uri, Toast.LENGTH_SHORT).show();
                     }
                 } else {
                     Intent intent1 = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
@@ -183,13 +184,12 @@ public class chatHeadService extends Service implements FloatingViewListener {
                     currentForegroundPackageName = mySortedMap.get(mySortedMap.lastKey()).getPackageName();
                 }
             }
-            Log.e("hgnis", "Current App in foreground is: " + currentForegroundPackageName);
         } else {
 
             ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
             currentForegroundPackageName = (manager.getRunningTasks(1).get(0)).topActivity.getPackageName();
-            Log.e("hgnis", "Current App in foreground is: " + currentForegroundPackageName);
         }
+        Log.e("hgnis", "Current App in foreground is: " + currentForegroundPackageName);
 
     }
 
@@ -237,17 +237,6 @@ public class chatHeadService extends Service implements FloatingViewListener {
                 .setCategory(Notification.CATEGORY_SERVICE)
                 .build();
         return notification;
-        /*final NotificationCompat.Builder builder = new NotificationCompat.Builder(context, getResources().getString(R.string.default_floatingview_channel_id));
-        Notification notification = builder.setOngoing(true)
-                .setWhen(System.currentTimeMillis())
-                .setContentTitle(this.getResources().getString(R.string.app_name))
-                .setContentText(this.getResources().getString(R.string.running))
-                .setOngoing(true)
-                .setPriority(NotificationCompat.PRIORITY_MIN)
-                .setCategory(NotificationCompat.CATEGORY_SERVICE)
-                .build();
-
-        return notification;*/
     }
 
     @Override
@@ -260,49 +249,6 @@ public class chatHeadService extends Service implements FloatingViewListener {
 
     }
 
-    /*Screenshot Code*/
-    public void processImage(final byte[] png) {
-        File outputImage = new File(getExternalCacheDir()/*getExternalFilesDir(null)*/, "image" + ".png");
-        Handler handler = new Handler(Looper.getMainLooper());
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-                //File outputImage = new File(getCacheDir()/*getExternalFilesDir(null)*/, "image" + ".png");
-                FileOutputStream fos = null;
-
-                try {
-                    fos = new FileOutputStream(outputImage);
-                    fos.write(png);
-                    fos.flush();
-                    fos.getFD().sync();
-                    fos.close();
-
-
-                    MediaScannerConnection.scanFile(chatHeadService.this,
-                            new String[]{outputImage.getAbsolutePath()},
-                            new String[]{"image/png"},
-                            null);
-                } catch (Exception e) {
-                    Log.e(getClass().getSimpleName(), "Exception writing out screenshot", e);
-                    Toast.makeText(context, "WRITE ERROR " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
-                }
-                hideViews();
-            }
-        });
-
-        stopCapture();
-        //loadImageFromStorage(getCacheDir(), "image");
-    }
-
-    private void hideViews() {
-        if (windowManager != null) {
-            windowManager.removeView(view);
-            windowManager = null;
-        }
-
-        iconView.setVisibility(View.VISIBLE);
-    }
-
 
     public void stopCapture() {
         if (projection != null) {
@@ -312,24 +258,6 @@ public class chatHeadService extends Service implements FloatingViewListener {
             vdisplay.release();
             projection = null;
         }
-    }
-
-    public void startCapture() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            projection = mgr.getMediaProjection(resultCode, resultData);
-        }
-
-
-        MediaProjection.Callback cb = null;
-
-    }
-
-    public WindowManager getWindowManager() {
-        return (windowManager);
-    }
-
-    public Handler getHandler() {
-        return (handler);
     }
 
     @Override

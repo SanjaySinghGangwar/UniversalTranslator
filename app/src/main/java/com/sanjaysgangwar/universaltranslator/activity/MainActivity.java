@@ -142,7 +142,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (requestCode == viaCameraCode && resultCode == RESULT_OK) {
             File imageFile = null;
             imageFile = new File(pictureFilePathCheckin);
-
             Bitmap bitmap = BitmapFactory.decodeFile(imageFile.getPath());
             try {
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 85, new FileOutputStream(imageFile));
