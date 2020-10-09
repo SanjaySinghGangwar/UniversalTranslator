@@ -1232,20 +1232,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
         Button setLanguage = view.findViewById(R.id.setLanguage);
-        setLanguage.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (targetLanguage.isEmpty() && languageSelected.isEmpty()) {
-                    Toast.makeText(MainActivity.this, "Select a language", Toast.LENGTH_SHORT).show();
-                } else {
-                    editor.putString("targetLanguage", targetLanguage);
-                    editor.putString("SelectedLanguage", languageSelected);
-                    editor.commit();
-                    alertDialog.dismiss();
-                    Toast.makeText(MainActivity.this, languageSelected + " is set", Toast.LENGTH_LONG).show();
-                }
-
+        setLanguage.setOnClickListener(view1 -> {
+            if (targetLanguage.isEmpty() && languageSelected.isEmpty()) {
+                Toast.makeText(MainActivity.this, "Select a language", Toast.LENGTH_SHORT).show();
+            } else {
+                editor.putString("targetLanguage", targetLanguage);
+                editor.putString("SelectedLanguage", languageSelected);
+                editor.commit();
+                alertDialog.dismiss();
+                Toast.makeText(MainActivity.this, languageSelected + " is set", Toast.LENGTH_LONG).show();
             }
+
         });
     }
 

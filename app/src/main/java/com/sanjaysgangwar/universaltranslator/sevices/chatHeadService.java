@@ -14,12 +14,10 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.hardware.display.VirtualDisplay;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -28,7 +26,6 @@ import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -47,7 +44,6 @@ import jp.co.recruit_lifestyle.android.floatingview.FloatingViewListener;
 import jp.co.recruit_lifestyle.android.floatingview.FloatingViewManager;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-import static com.sanjaysgangwar.universaltranslator.sevices.Storage.saveToDataDir;
 
 public class chatHeadService extends Service implements FloatingViewListener {
     public static final String EXTRA_CUTOUT_SAFE_AREA = "cutout_safe_area";
@@ -58,7 +54,6 @@ public class chatHeadService extends Service implements FloatingViewListener {
     final private HandlerThread handlerThread = new HandlerThread(getClass().getSimpleName(), android.os.Process.THREAD_PRIORITY_BACKGROUND);
     public LayoutInflater inflater;
     public WindowManager windowManager;
-    public View view;
     Context context = chatHeadService.this;
     DisplayMetrics metrics;
     ImageView crossArrow, tickArrow;
@@ -92,10 +87,10 @@ public class chatHeadService extends Service implements FloatingViewListener {
     public void onCreate() {
         super.onCreate();
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            mgr = (MediaProjectionManager) this.getSystemService(MEDIA_PROJECTION_SERVICE);
-            usm = (UsageStatsManager) this.getSystemService(Context.USAGE_STATS_SERVICE);
-        }
+
+        mgr = (MediaProjectionManager) this.getSystemService(MEDIA_PROJECTION_SERVICE);
+        usm = (UsageStatsManager) this.getSystemService(Context.USAGE_STATS_SERVICE);
+
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         appOps = (AppOpsManager) context.getSystemService(Context.APP_OPS_SERVICE);
 
@@ -132,9 +127,11 @@ public class chatHeadService extends Service implements FloatingViewListener {
                     if (defaultHomePackageName.equalsIgnoreCase(currentForegroundPackageName)) {
                         Toast.makeText(context, "Open app where I have to read", Toast.LENGTH_LONG).show();
                     } else {
+                       /*  iconView.setVisibility(View.GONE);
                         Bitmap b = Screenshot.takescreenshotOfRootView(v);
                         Uri uri = saveToDataDir(this, b, "Screenshot");
                         Toast.makeText(context, "" + uri, Toast.LENGTH_SHORT).show();
+                        iconView.setVisibility(View.VISIBLE);*/
                     }
                 } else {
                     Intent intent1 = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
