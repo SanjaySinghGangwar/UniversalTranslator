@@ -127,6 +127,7 @@ public class chatHeadService extends Service implements FloatingViewListener {
                     if (defaultHomePackageName.equalsIgnoreCase(currentForegroundPackageName)) {
                         Toast.makeText(context, "Open app where I have to read", Toast.LENGTH_LONG).show();
                     } else {
+                        Toast.makeText(context, "ScreenShot", Toast.LENGTH_SHORT).show();
                        /*  iconView.setVisibility(View.GONE);
                         Bitmap b = Screenshot.takescreenshotOfRootView(v);
                         Uri uri = saveToDataDir(this, b, "Screenshot");

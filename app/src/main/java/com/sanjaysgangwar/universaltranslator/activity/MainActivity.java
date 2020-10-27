@@ -2,9 +2,7 @@ package com.sanjaysgangwar.universaltranslator.activity;
 
 import android.Manifest;
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
@@ -39,6 +37,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.sanjaysgangwar.universaltranslator.R;
 import com.sanjaysgangwar.universaltranslator.api.apiInterface;
+import com.sanjaysgangwar.universaltranslator.modelClasses.AppSharePreference;
 import com.sanjaysgangwar.universaltranslator.modelClasses.translateModel.Model;
 import com.sanjaysgangwar.universaltranslator.modelClasses.visionModel.VisionModel;
 import com.sanjaysgangwar.universaltranslator.sevices.chatHeadService;
@@ -83,19 +82,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     String languageSelected;
     String targetLanguage;
     myProgressView myProgressView;
-    private SharedPreferences sharedPreferences;
-    private SharedPreferences.Editor editor;
-    private String APP_SHARED_PREFS;
+    AppSharePreference appSharePreference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
-
         initListener();
-        sharedPref();
         myProgressView = new myProgressView(this);
+        appSharePreference = new AppSharePreference(this);
 
 
     }
@@ -111,12 +107,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         viaPhone.setOnLongClickListener(this);
     }
 
-    private void sharedPref() {
-        sharedPreferences = this.getSharedPreferences(APP_SHARED_PREFS, Context.MODE_PRIVATE);
-        editor = sharedPreferences.edit();
-        APP_SHARED_PREFS = "Translator";
-    }
-
     private File getPictureFileCheckin() throws IOException {
         String timeStamp = utils.currentTimeStamp();
         File storageDir = this.getExternalFilesDir(null);
@@ -127,8 +117,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void cameraOpen() throws IOException {
         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        File pictureFileCheckin = null;
-        pictureFileCheckin = getPictureFileCheckin();
+        File pictureFileCheckin = getPictureFileCheckin();
         Uri photoURI = FileProvider.getUriForFile(this, "com.sanjaysgangwar.universaltranslator.fileprovider", pictureFileCheckin);
         cameraIntent.putExtra(MediaStore.EXTRA_FINISH_ON_COMPLETION, true);
         cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
@@ -138,36 +127,37 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == viaCameraCode && resultCode == RESULT_OK) {
-            File imageFile = null;
-            imageFile = new File(pictureFilePathCheckin);
-            Bitmap bitmap = BitmapFactory.decodeFile(imageFile.getPath());
-            try {
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 85, new FileOutputStream(imageFile));
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-            croper(Uri.fromFile(imageFile));
-
-        } else if (requestCode == viaGalleryCode && resultCode == RESULT_OK) {
-            croper(data.getData());
-        } else if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
-            CropImage.ActivityResult result = CropImage.getActivityResult(data);
-            if (resultCode == RESULT_OK) {
-                if (utils.networkIsOnline(this)) {
-                    sentImageToGoogleServer(new File(result.getUri().getPath()));
-                } else {
-                    myToast.showRed(this, "No Internet Connection");
+        if (resultCode == RESULT_OK) {
+            if (requestCode == viaCameraCode) {
+                File imageFile = new File(pictureFilePathCheckin);
+                Bitmap bitmap = BitmapFactory.decodeFile(imageFile.getPath());
+                try {
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 85, new FileOutputStream(imageFile));
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
                 }
-            } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
-                Toast.makeText(this, "" + result.getError(), Toast.LENGTH_SHORT).show();
+                croper(Uri.fromFile(imageFile));
+
+            } else if (requestCode == viaGalleryCode) {
+                croper(data.getData());
+            } else if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
+                CropImage.ActivityResult result = CropImage.getActivityResult(data);
+                if (resultCode == RESULT_OK) {
+                    if (utils.networkIsOnline(this)) {
+                        sentImageToGoogleServer(new File(result.getUri().getPath()));
+                    } else {
+                        myToast.showRed(this, "No Internet Connection");
+                    }
+                } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
+                    Toast.makeText(this, "" + result.getError(), Toast.LENGTH_SHORT).show();
+                }
+            } else if (requestCode == chatHead) {
+                openChatHead();
             }
-        } else if (requestCode == chatHead && resultCode == RESULT_OK) {
-            openChatHead();
         } else {
             myToast.showRed(this, "Give it a chance");
         }
+
     }
 
     private void croper(Uri image) {
@@ -184,7 +174,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                         ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA}, 10);
                     } else {
-                        if (sharedPreferences.getString("SelectedLanguage", "").isEmpty()) {
+                        if (appSharePreference.getSelectedLanguage().isEmpty()) {
                             dialogForLanguage();
                         } else {
                             cameraOpen();
@@ -196,7 +186,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;
             case R.id.viaGallery:
-                if (sharedPreferences.getString("SelectedLanguage", "").isEmpty()) {
+                if (appSharePreference.getSelectedLanguage().isEmpty()) {
                     dialogForLanguage();
                 } else {
                     Intent i = new Intent();
@@ -206,7 +196,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;
             case R.id.viaPhone:
-                if (sharedPreferences.getString("SelectedLanguage", "").isEmpty()) {
+                if (appSharePreference.getSelectedLanguage().isEmpty()) {
                     dialogForLanguage();
                 } else {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
@@ -221,7 +211,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.viaText:
                 MaterialAlertDialogBuilder alert = new MaterialAlertDialogBuilder(MainActivity.this);
                 View Dialogview = getLayoutInflater().inflate(R.layout.popup_translate, null);
-                //Components from the view is added
                 final EditText translateText = Dialogview.findViewById(R.id.translateET);
                 Button translateBT = Dialogview.findViewById(R.id.TranslateBT);
                 alert.setView(Dialogview);
@@ -741,7 +730,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
             case R.id.targetLanguage:
-                if (sharedPreferences.getString("SelectedLanguage", "").isEmpty()) {
+                if (appSharePreference.getSelectedLanguage().isEmpty()) {
                     dialogForLanguage();
                 } else {
                     MaterialAlertDialogBuilder alert = new MaterialAlertDialogBuilder(this);
@@ -752,21 +741,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Button yes = view.findViewById(R.id.yesBT);
                     Button no = view.findViewById(R.id.noBt);
 
-                    yes.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            alertDialog.dismiss();
-                            editor.clear();
-                            editor.commit();
-                            dialogForLanguage();
-                        }
+                    yes.setOnClickListener(view12 -> {
+                        alertDialog.dismiss();
+                        appSharePreference.clearPreferences();
+                        dialogForLanguage();
                     });
-                    no.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            alertDialog.dismiss();
-                        }
-                    });
+                    no.setOnClickListener(view1 -> alertDialog.dismiss());
                 }
 
                 break;
@@ -1236,9 +1216,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (targetLanguage.isEmpty() && languageSelected.isEmpty()) {
                 Toast.makeText(MainActivity.this, "Select a language", Toast.LENGTH_SHORT).show();
             } else {
-                editor.putString("targetLanguage", targetLanguage);
-                editor.putString("SelectedLanguage", languageSelected);
-                editor.commit();
+                appSharePreference.setTargetLanguageCode(targetLanguage);
+                appSharePreference.setSelectedLanguage(languageSelected);
+                appSharePreference.setTargetLanguage(targetLanguage);
                 alertDialog.dismiss();
                 Toast.makeText(MainActivity.this, languageSelected + " is set", Toast.LENGTH_LONG).show();
             }
@@ -1323,7 +1303,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             if (response.body() != null) {
                                 try {
                                     String extractText = response.body().getResponses().get(0).getFullTextAnnotation().getText();
-                                    translateAPI(extractText, sharedPreferences.getString("targetLanguage", ""), sharedPreferences.getString("SelectedLanguage", ""));
+                                    translateAPI(extractText, appSharePreference.getTargetLanguage(), appSharePreference.getSelectedLanguage());
                                 } catch (Exception e) {
                                     if (myProgressView.isShowing()) {
                                         myProgressView.hideLoader();

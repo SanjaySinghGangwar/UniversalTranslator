@@ -15,14 +15,14 @@
         android:orientation="vertical">
 
         <TextView
-            android:fontFamily="@font/myfont_regular"
             android:id="@+id/sourceLanguage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="25dp"
             android:layout_marginTop="20dp"
-            android:text="Auto - "
-            android:layout_marginEnd="16dp" />
+            android:layout_marginEnd="16dp"
+            android:fontFamily="@font/myfont_regular"
+            android:text="Auto - " />
 
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
@@ -34,11 +34,11 @@
             card_view:cardElevation="10dp">
 
             <TextView
-                android:fontFamily="@font/myfont_regular"
                 android:id="@+id/sourceLanguageTv"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_margin="10dp"
+                android:fontFamily="@font/myfont_regular"
                 android:textColor="@android:color/white" />
 
         </androidx.cardview.widget.CardView>
@@ -64,13 +64,13 @@
         </androidx.cardview.widget.CardView>
 
         <TextView
-            android:fontFamily="@font/myfont_regular"
             android:id="@+id/targetLanguage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="25dp"
             android:layout_marginTop="20dp"
-            android:layout_marginEnd="16dp" />
+            android:layout_marginEnd="16dp"
+            android:fontFamily="@font/myfont_regular" />
 
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
@@ -82,11 +82,11 @@
             card_view:cardElevation="10dp">
 
             <TextView
-                android:fontFamily="@font/myfont_regular"
                 android:id="@+id/translatedLanguageTV"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_margin="10dp"
+                android:fontFamily="@font/myfont_regular"
                 android:textColor="@android:color/white" />
         </androidx.cardview.widget.CardView>
 

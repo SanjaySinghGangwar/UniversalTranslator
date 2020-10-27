@@ -22,12 +22,10 @@ public class myProgressView {
     }
 
     public void showLoader() {
-        if (!dialog.isShowing()) {
-            dialog.show();
-        } else {
+        if (dialog.isShowing()) {
             dialog.dismiss();
-            dialog.show();
         }
+        dialog.show();
     }
 
     public void hideLoader() {

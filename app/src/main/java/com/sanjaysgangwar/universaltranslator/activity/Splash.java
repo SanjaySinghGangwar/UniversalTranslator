@@ -1,4 +1,4 @@
-package com.sanjaysgangwar.universaltranslator;
+package com.sanjaysgangwar.universaltranslator.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -7,7 +7,7 @@ import android.os.Looper;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.sanjaysgangwar.universaltranslator.activity.MainActivity;
+import com.sanjaysgangwar.universaltranslator.R;
 
 import java.util.Objects;
 
