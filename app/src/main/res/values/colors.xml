@@ -10,4 +10,14 @@
     <color name="secondary_text">#757575</color>
     <color name="icons">#FFFFFF</color>
     <color name="divider">#BDBDBD</color>
+
+
+    <color name="white_translucent">#AAFFFFFF</color>
+    <color name="black_translucent">#ee000000</color>
+    <color name="border">@color/white_translucent</color>
+    <color name="guideline">@color/white_translucent</color>
+    <color name="corner">@android:color/holo_green_light</color>
+    <color name="surrounding_area">#000000</color>
+
+
 </resources>

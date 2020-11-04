@@ -17,4 +17,5 @@ public class utils {
         NetworkInfo netInfo = connectivityManager.getActiveNetworkInfo();
         return (netInfo != null && netInfo.isConnected());
     }
+
 }

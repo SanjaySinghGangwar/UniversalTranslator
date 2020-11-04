@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.projection.MediaProjectionManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -68,8 +69,8 @@ import static com.sanjaysgangwar.universaltranslator.sevices.utils.networkIsOnli
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, View.OnLongClickListener {
 
+    private static final int REQUEST_SCREENSHOT = 59706;
     private static String pictureFilePathCheckin = "";
-
     int viaCameraCode = 100, viaGalleryCode = 101, chatHead = 102;
     @BindView(R.id.cameraButton)
     CardView cameraButton;
@@ -83,6 +84,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     String targetLanguage;
     myProgressView myProgressView;
     AppSharePreference appSharePreference;
+    private MediaProjectionManager mgr;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,6 +107,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         viaGallery.setOnLongClickListener(this);
         viaPhone.setOnClickListener(this);
         viaPhone.setOnLongClickListener(this);
+
+
+        mgr = (MediaProjectionManager) getSystemService(MEDIA_PROJECTION_SERVICE);
+
+
+        if (chatHeadService.resultData == null) {
+            startActivityForResult(mgr.createScreenCaptureIntent(), REQUEST_SCREENSHOT);
+
+        }
     }
 
     private File getPictureFileCheckin() throws IOException {
@@ -153,6 +164,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
             } else if (requestCode == chatHead) {
                 openChatHead();
+            } else if (requestCode == REQUEST_SCREENSHOT) {
+
+                chatHeadService.resultCode = resultCode;
+                chatHeadService.resultData = (Intent) data.clone();
+
             }
         } else {
             myToast.showRed(this, "Give it a chance");
@@ -666,21 +682,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                     }
                 });
-                translateBT.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        String dataToTranslate = translateText.getText().toString().trim();
-                        if (dataToTranslate.isEmpty()) {
-                            translateText.setText("Enter Text here");
+                translateBT.setOnClickListener(view1 -> {
+                    String dataToTranslate = translateText.getText().toString().trim();
+                    if (dataToTranslate.isEmpty()) {
+                        translateText.setText(R.string.Enter_text_here);
+                    } else {
+                        alertDialog.dismiss();
+                        if (utils.networkIsOnline(MainActivity.this)) {
+                            translateAPI(dataToTranslate, targetLanguage, languageSelected);
                         } else {
-                            alertDialog.dismiss();
-                            if (utils.networkIsOnline(MainActivity.this)) {
-                                translateAPI(dataToTranslate, targetLanguage, languageSelected);
-                            } else {
-                                myToast.showRed(MainActivity.this, "No Internet Connection");
-                            }
-
+                            myToast.showRed(MainActivity.this, "No Internet Connection");
                         }
+
                     }
                 });
                 break;
