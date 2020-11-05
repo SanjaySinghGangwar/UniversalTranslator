@@ -10,13 +10,9 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
-import android.content.ActivityNotFoundException;
-import android.content.ClipboardManager;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -28,14 +24,12 @@ import android.hardware.display.VirtualDisplay;
 import android.media.MediaScannerConnection;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.provider.Settings;
-import android.speech.tts.TextToSpeech;
 import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -44,7 +38,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -56,8 +49,8 @@ import com.google.gson.JsonObject;
 import com.sanjaysgangwar.universaltranslator.R;
 import com.sanjaysgangwar.universaltranslator.api.apiInterface;
 import com.sanjaysgangwar.universaltranslator.crop_slider.CropImageView;
+import com.sanjaysgangwar.universaltranslator.modelClasses.AppSharePreference;
 import com.sanjaysgangwar.universaltranslator.modelClasses.translateModel.Model;
-import com.sanjaysgangwar.universaltranslator.modelClasses.translateModel.Translation;
 import com.sanjaysgangwar.universaltranslator.modelClasses.visionModel.VisionModel;
 
 import java.io.ByteArrayOutputStream;
@@ -67,7 +60,6 @@ import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.Random;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -82,9 +74,9 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static com.sanjaysgangwar.universaltranslator.sevices.utils.APIkey;
 
 public class chatHeadService extends Service implements FloatingViewListener, View.OnClickListener {
-
     public static final String EXTRA_CUTOUT_SAFE_AREA = "cutout_safe_area";
     public static final int NOTIFICATION_ID = 9083150;
     /*Screenshot Variables */
@@ -96,8 +88,10 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
     public LayoutInflater inflater;
     public WindowManager windowManager;
     public View view;
+    AppSharePreference appSharePreference;
     Context context = chatHeadService.this;
     DisplayMetrics metrics;
+    String sourceLocale;
     ImageView crossArrow, tickArrow;
     Bitmap icon;
     CropImageView cropImageView;
@@ -107,16 +101,11 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
     UsageStatsManager usm;
     String defaultHomePackageName, currentForegroundPackageName;
     View view2;
-    Translation translation;
     String translatedText;
-    TextView resultTV;
     String extractText;
-    TextToSpeech tss;
-    ImageView textToSpeak;
     int count;
     int Ccounter;
 
-    String key = "AIzaSyA7hQ5A_MnRf2TM2yf0nIO61wdqNKPWgyQ";
 
     private FloatingViewManager mFloatingViewManager;
     private MediaProjection projection;
@@ -124,9 +113,6 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
     private Handler handler;
     private MediaProjectionManager mgr;
     private ImageTransmogrifier it;
-    private SharedPreferences sharedPreferences;
-    private SharedPreferences.Editor editor;
-    private String APP_SHARED_PREFS;
 
     public chatHeadService() {
     }
@@ -144,9 +130,6 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
     @Override
     public void onCreate() {
         super.onCreate();
-        sharedPreferences = this.getSharedPreferences(APP_SHARED_PREFS, Context.MODE_PRIVATE);
-        editor = sharedPreferences.edit();
-        APP_SHARED_PREFS = "targetLanguage";
 
 
         mgr = (MediaProjectionManager) this.getSystemService(MEDIA_PROJECTION_SERVICE);
@@ -159,25 +142,7 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
         metrics = new DisplayMetrics();
         handlerThread.start();
         handler = new Handler(handlerThread.getLooper());
-
-        tss = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
-            @Override
-            public void onInit(int status) {
-                if (status == TextToSpeech.SUCCESS) {
-                    int lang = tss.setLanguage(Locale.getDefault());
-                    tss.setVoice(tss.getVoice());
-                    tss.setPitch(1);
-                    tss.setSpeechRate(0.9f);
-                    if (lang == TextToSpeech.LANG_MISSING_DATA
-                            || lang == TextToSpeech.LANG_NOT_SUPPORTED) {
-                        Toast.makeText(chatHeadService.this, "Not supported", Toast.LENGTH_SHORT).show();
-                        Log.e("TTS", "Language not supported");
-                    }
-                } else {
-                    Log.e("TTS", "Initialization failed");
-                }
-            }
-        });
+        appSharePreference = new AppSharePreference(this);
 
 
     }
@@ -465,23 +430,19 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
                                         extractText = response.body().getResponses().get(0).getFullTextAnnotation().getText();
                                         translateAPI(extractText);
                                     } catch (Exception e) {
-                                        Toast.makeText(chatHeadService.this, "Try Again " + e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
-
+                                        myToast.showRed(chatHeadService.this, "Try Again " + e.getLocalizedMessage());
                                     }
-
                                 }
-
                             }
                         }
 
                         @Override
                         public void onFailure(Call<VisionModel> call, Throwable t) {
-                            Log.i("TAG", "onFailure: " + t.getLocalizedMessage());
-                            Toast.makeText(chatHeadService.this, "Try Again " + t.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+                            myToast.showRed(chatHeadService.this, "Try Again " + t.getLocalizedMessage());
                         }
                     });
                 } else {
-                    Toast.makeText(this, "No internet Connection", Toast.LENGTH_SHORT).show();
+                    myToast.showRed(this, "No internet Connection");
                 }
 
             }
@@ -489,6 +450,7 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
 
         } catch (Exception e) {
             e.printStackTrace();
+            myToast.showRed(this, e.getLocalizedMessage());
         }
 
 
@@ -500,7 +462,7 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
                 .addConverterFactory(GsonConverterFactory.create());
         Retrofit retrofit = builder.build();
         apiInterface apiInterface = retrofit.create(apiInterface.class);
-        Call<Model> call = apiInterface.translateApi(key, extractText, sharedPreferences.getString("targetLanguage", ""));
+        Call<Model> call = apiInterface.translateApi(APIkey, extractText, appSharePreference.getTargetLanguage());
         call.enqueue(new Callback<Model>() {
             @Override
             public void onResponse(Call<Model> call, Response<Model> response) {
@@ -508,13 +470,13 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
                     if (response.body() != null) {
                         Log.i("REST API", "onResponse: TRANSLATE" + response.body().getData().getTranslations().get(0).getTranslatedText());
                         if (response.body().getData().getTranslations().get(0).getTranslatedText() != null) {
+                            sourceLocale = response.body().getData().getTranslations().get(0).getDetectedSourceLanguage();
+
                             translatedText = response.body().getData().getTranslations().get(0).getTranslatedText();
-
                             createViewForResult();
-
                         }
-
-
+                    } else {
+                        myToast.showRed(getApplicationContext(), "Try Again");
                     }
 
                 }
@@ -532,7 +494,6 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
 
 
     private void createViewForResult() {
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             if (usageAccessGranted(context)) {
                 getCurrentAppForegound();
@@ -558,26 +519,18 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
                     view = inflater.inflate(R.layout.result_layout, null);
                     view2 = view.getRootView();
 
-                    LinearLayout top = view.findViewById(R.id.TOP);
-                    LinearLayout bottom = view.findViewById(R.id.BOTTOM);
                     ImageView closeBT = view.findViewById(R.id.closeBT);
-                    resultTV = view.findViewById(R.id.resultTV);
-                    ImageView swap = view.findViewById(R.id.swap);
-                    textToSpeak = view.findViewById(R.id.textToSpeak);
-                    ImageView addToFav = view.findViewById(R.id.addToFav);
-                    ImageView share = view.findViewById(R.id.share);
+                    TextView sourceText = view.findViewById(R.id.sourceLanguageTv);
+                    TextView translateText = view.findViewById(R.id.translatedLanguageTV);
+                    TextView targetLanguage = view.findViewById(R.id.targetLanguage);
+                    TextView sourceLanguage = view.findViewById(R.id.sourceLanguage);
+                    sourceLanguage.setText("Auto : " + sourceLocale);
+                    targetLanguage.setText(appSharePreference.getSelectedLanguage());
+                    sourceText.setText(extractText.trim());
 
-
-                    bottom.setOnClickListener(this);
-                    top.setOnClickListener(this);
+                    translateText.setText(translatedText.trim());
                     closeBT.setOnClickListener(this);
-                    swap.setOnClickListener(this);
-                    textToSpeak.setOnClickListener(this);
-                    addToFav.setOnClickListener(this);
-                    share.setOnClickListener(this);
 
-                    //translatedText to be shown to user
-                    resultTV.setText(translatedText);
                     windowManager.addView(view, params);
 
                 }
@@ -650,75 +603,9 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
-            case R.id.TOP:
-            case R.id.BOTTOM:
+
             case R.id.closeBT:
                 resultVisibilityOff();
-                break;
-            case R.id.swap:
-                Ccounter = Ccounter + 1;
-                if (Ccounter % 2 == 0) {
-                    resultTV.setText(extractText);
-
-                } else if (Ccounter % 2 == 1) {
-                    resultTV.setText(translatedText);
-                }
-
-               /* String get=resultTV.getText().toString();
-                if(get.equals(translatedText)){
-                    resultTV.setText(extractText);
-                }
-                else if (get.equals(extractText)){
-                    resultTV.setText(translatedText);
-                }
-                else{
-
-                    Toast.makeText(this, ""+get, Toast.LENGTH_SHORT).show();
-                }*/
-               /* if (translatedText.contentEquals(resultTV.getText())) {
-
-                } else if (extractText.contentEquals(resultTV.getText())) {
-                    resultTV.setText(translatedText);
-                }*/
-
-                break;
-            case R.id.textToSpeak:
-                if (tss != null) {
-                    if (tss.isSpeaking()) {
-                        tss.stop();
-                    } else {
-                        tss.speak(resultTV.getText().toString().trim(), TextToSpeech.QUEUE_FLUSH, null);
-
-                    }
-                }
-
-                break;
-            case R.id.addToFav:
-                ClipboardManager cm = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
-                cm.setText(resultTV.getText());
-                Toast.makeText(this, "Copied to Clipboard", Toast.LENGTH_SHORT).show();
-                break;
-            case R.id.share:
-                String url = "http://mysuperwebsite";
-                try {
-                    Intent i = new Intent("android.intent.action.MAIN");
-                    i.setComponent(ComponentName.unflattenFromString("com.android.chrome/com.android.chrome.Main"));
-                    i.addCategory("android.intent.category.LAUNCHER");
-                    i.setData(Uri.parse(url));
-                    startActivity(i);
-                } catch (ActivityNotFoundException e) {
-                    // Chrome is not installed
-                    Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                    startActivity(i);
-                }
-               /* String data = resultTV.getText().toString().trim();
-                Intent sendIntent = new Intent();
-                sendIntent.setAction(Intent.ACTION_SEND);
-                sendIntent.putExtra(Intent.EXTRA_TEXT, data);
-                sendIntent.setType("text/plain");
-                Intent shareIntent = Intent.createChooser(sendIntent, null);
-                this.getApplication().getApplicationContext().startActivity(shareIntent);
-                resultVisibilityOff();*/
                 break;
         }
     }
@@ -726,11 +613,7 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
     private void resultVisibilityOff() {
         if (view2 != null) {
             if (view2.getVisibility() == View.VISIBLE) {
-                if (tss != null) {
-                    if (tss.isSpeaking()) {
-                        tss.stop();
-                    }
-                }
+                //tss.stop
                 hideViews2();
             }
         }

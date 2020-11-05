@@ -27,8 +27,7 @@
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:layout_gravity="bottom|start"
-            android:background="@drawable/rectangle_shape_cross"
-            android:src="@drawable/ic_close_black_24dp" />
+            android:src="@drawable/cross" />
 
     </LinearLayout>
 
@@ -44,8 +43,7 @@
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:layout_gravity="top|end"
-            android:background="@drawable/rectangle_shape_tick"
-            android:src="@drawable/ic_check_black_24dp" />
+            android:src="@drawable/tick" />
 
     </LinearLayout>
 

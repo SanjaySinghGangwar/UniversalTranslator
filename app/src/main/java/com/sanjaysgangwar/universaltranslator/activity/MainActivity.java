@@ -13,8 +13,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.provider.Settings;
-import android.util.Base64;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -34,13 +32,9 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import com.sanjaysgangwar.universaltranslator.R;
-import com.sanjaysgangwar.universaltranslator.api.apiInterface;
+import com.sanjaysgangwar.universaltranslator.imageProcessing.google;
 import com.sanjaysgangwar.universaltranslator.modelClasses.AppSharePreference;
-import com.sanjaysgangwar.universaltranslator.modelClasses.translateModel.Model;
-import com.sanjaysgangwar.universaltranslator.modelClasses.visionModel.VisionModel;
 import com.sanjaysgangwar.universaltranslator.sevices.chatHeadService;
 import com.sanjaysgangwar.universaltranslator.sevices.myProgressView;
 import com.sanjaysgangwar.universaltranslator.sevices.myToast;
@@ -48,9 +42,7 @@ import com.sanjaysgangwar.universaltranslator.sevices.utils;
 import com.theartofdev.edmodo.cropper.CropImage;
 import com.toptoche.searchablespinnerlibrary.SearchableSpinner;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -58,14 +50,8 @@ import java.io.IOException;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import jp.co.recruit_lifestyle.android.floatingview.FloatingViewManager;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
 
-import static com.sanjaysgangwar.universaltranslator.sevices.utils.APIkey;
-import static com.sanjaysgangwar.universaltranslator.sevices.utils.networkIsOnline;
+import static com.sanjaysgangwar.universaltranslator.imageProcessing.google.sentImageToServer;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, View.OnLongClickListener {
 
@@ -110,11 +96,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
         mgr = (MediaProjectionManager) getSystemService(MEDIA_PROJECTION_SERVICE);
-
-
         if (chatHeadService.resultData == null) {
             startActivityForResult(mgr.createScreenCaptureIntent(), REQUEST_SCREENSHOT);
-
         }
     }
 
@@ -155,7 +138,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 CropImage.ActivityResult result = CropImage.getActivityResult(data);
                 if (resultCode == RESULT_OK) {
                     if (utils.networkIsOnline(this)) {
-                        sentImageToGoogleServer(new File(result.getUri().getPath()));
+                        sentImageToServer(new File(result.getUri().getPath()), getApplicationContext());
                     } else {
                         myToast.showRed(this, "No Internet Connection");
                     }
@@ -165,10 +148,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             } else if (requestCode == chatHead) {
                 openChatHead();
             } else if (requestCode == REQUEST_SCREENSHOT) {
-
                 chatHeadService.resultCode = resultCode;
                 chatHeadService.resultData = (Intent) data.clone();
-
             }
         } else {
             myToast.showRed(this, "Give it a chance");
@@ -196,7 +177,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             cameraOpen();
                         }
                     }
-
                 } catch (IOException ex) {
                     myToast.showRed(this, "Photo file can't be saved, please try again");
                 }
@@ -689,7 +669,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     } else {
                         alertDialog.dismiss();
                         if (utils.networkIsOnline(MainActivity.this)) {
-                            translateAPI(dataToTranslate, targetLanguage, languageSelected);
+                            google.translateAPI(dataToTranslate, getApplicationContext());
                         } else {
                             myToast.showRed(MainActivity.this, "No Internet Connection");
                         }
@@ -1274,136 +1254,4 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    public void sentImageToGoogleServer(File absoluteFile) {
-        myProgressView.showLoader();
-        try {
-            File f = new File(String.valueOf((absoluteFile)));
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            Bitmap b = BitmapFactory.decodeStream(new FileInputStream(f));
-
-            b.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-            byte[] imageBytes = baos.toByteArray();
-            String imageString = Base64.encodeToString(imageBytes, Base64.DEFAULT);
-
-            //vision Api
-            JsonObject type = new JsonObject();
-            JsonObject content = new JsonObject();
-            JsonObject requests = new JsonObject();
-            JsonArray jsonArray = new JsonArray();
-
-            content.addProperty("content", imageString);
-            type.addProperty("type", "DOCUMENT_TEXT_DETECTION");/*TEXT_DETECTION*/
-            requests.add("image", content);
-            JsonArray array = new JsonArray();
-            array.add(type);
-            requests.add("features", array);
-            jsonArray.add(requests);
-            JsonObject request = new JsonObject();
-            request.add("requests", jsonArray);
-
-            boolean stat = networkIsOnline(MainActivity.this);
-            if (stat) {
-                Retrofit.Builder builder = new Retrofit.Builder()
-                        .baseUrl("https://vision.googleapis.com/v1/images:annotate/")
-                        .addConverterFactory(GsonConverterFactory.create());
-                Retrofit retrofit = builder.build();
-                apiInterface apiInterface = retrofit.create(apiInterface.class);
-                Call<VisionModel> call = apiInterface.visionApi(request);
-                call.enqueue(new Callback<VisionModel>() {
-                    @Override
-                    public void onResponse(Call<VisionModel> call, Response<VisionModel> response) {
-                        if (response.isSuccessful()) {
-                            if (response.body() != null) {
-                                try {
-                                    String extractText = response.body().getResponses().get(0).getFullTextAnnotation().getText();
-                                    translateAPI(extractText, appSharePreference.getTargetLanguage(), appSharePreference.getSelectedLanguage());
-                                } catch (Exception e) {
-                                    if (myProgressView.isShowing()) {
-                                        myProgressView.hideLoader();
-                                    }
-                                    myToast.showRed(MainActivity.this, e.getMessage());
-                                }
-
-                            }
-                            if (myProgressView.isShowing()) {
-                                myProgressView.hideLoader();
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(Call<VisionModel> call, Throwable t) {
-                        if (myProgressView.isShowing()) {
-                            myProgressView.hideLoader();
-                        }
-                        myToast.showRed(MainActivity.this, t.getMessage());
-                    }
-                });
-            } else {
-                if (myProgressView.isShowing()) {
-                    myProgressView.hideLoader();
-                }
-                myToast.showRed(MainActivity.this, "No internet Connection");
-            }
-
-
-        } catch (Exception e) {
-            if (myProgressView.isShowing()) {
-                myProgressView.hideLoader();
-            }
-            e.printStackTrace();
-            myToast.showRed(MainActivity.this, e.getMessage());
-        }
-    }
-
-    public void translateAPI(String extractText, String targetLanguage, String languageSelected) {
-        if (myProgressView.isShowing()) {
-        } else {
-            myProgressView.showLoader();
-        }
-        Retrofit.Builder builder = new Retrofit.Builder()
-                .baseUrl("https://translation.googleapis.com/language/translate/")
-                .addConverterFactory(GsonConverterFactory.create());
-        Retrofit retrofit = builder.build();
-        apiInterface apiInterface = retrofit.create(apiInterface.class);
-        Call<Model> call = apiInterface.translateApi(APIkey, extractText, targetLanguage);
-        call.enqueue(new Callback<Model>() {
-            @Override
-            public void onResponse(Call<Model> call, Response<Model> response) {
-                if (response.isSuccessful()) {
-                    if (response.body() != null) {
-                        Log.i("REST API", "onResponse: TRANSLATE" + response.body().getData().getTranslations().get(0).getTranslatedText());
-                        if (response.body().getData().getTranslations().get(0).getTranslatedText() != null) {
-                            String sourceLocale = response.body().getData().getTranslations().get(0).getDetectedSourceLanguage();
-                            String translatedText = response.body().getData().getTranslations().get(0).getTranslatedText();
-                            Intent i = new Intent(MainActivity.this, resultScreen.class);
-                            i.putExtra("sourceLocale", sourceLocale);
-                            i.putExtra("sourceText", extractText);
-                            i.putExtra("translatedText", translatedText);
-                            i.putExtra("languageSelected", languageSelected);
-                            startActivity(i);
-                        }
-
-
-                    }
-
-
-                }
-                if (myProgressView.isShowing()) {
-                    myProgressView.hideLoader();
-                }
-            }
-
-            @Override
-            public void onFailure(Call<Model> call, Throwable t) {
-                if (myProgressView.isShowing()) {
-                    myProgressView.hideLoader();
-                }
-                Log.i("API TRANSLATE", "onFailure: " + t);
-                myToast.showRed(MainActivity.this, "Try again " + t.getLocalizedMessage());
-            }
-        });
-
-
-    }
 }
