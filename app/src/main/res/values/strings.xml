@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Translator</string>
+    <string name="app_name">Translinator</string>
     <string name="running">Translator at your service</string>
     <string name="default_floatingview_channel_id">default_floatingview_channel</string>
     <string name="Enter_text_here">Enter Text here</string>

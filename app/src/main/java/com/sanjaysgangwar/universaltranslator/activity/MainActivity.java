@@ -2,6 +2,7 @@ package com.sanjaysgangwar.universaltranslator.activity;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -13,6 +14,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.provider.Settings;
+import android.speech.tts.TextToSpeech;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -66,6 +69,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     CardView viaGallery;
     @BindView(R.id.viaPhone)
     CardView viaPhone;
+    @BindView(R.id.setLanguage)
+    CardView setLanguage;
+    @BindView(R.id.download)
+    CardView download;
     String languageSelected;
     String targetLanguage;
     myProgressView myProgressView;
@@ -93,6 +100,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         viaGallery.setOnLongClickListener(this);
         viaPhone.setOnClickListener(this);
         viaPhone.setOnLongClickListener(this);
+        download.setOnClickListener(this);
+        download.setOnLongClickListener(this);
+        setLanguage.setOnClickListener(this);
+        setLanguage.setOnLongClickListener(this);
 
 
         mgr = (MediaProjectionManager) getSystemService(MEDIA_PROJECTION_SERVICE);
@@ -166,6 +177,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
+            case R.id.setLanguage:
+                if (appSharePreference.getSelectedLanguage().isEmpty()) {
+                    dialogForLanguage();
+                } else {
+                    MaterialAlertDialogBuilder alert = new MaterialAlertDialogBuilder(this);
+                    View view2 = getLayoutInflater().inflate(R.layout.popup_warning, null);
+                    alert.setView(view2);
+                    final AlertDialog alertDialog = alert.create();
+                    alertDialog.show();
+                    Button yes = view2.findViewById(R.id.yesBT);
+                    Button no = view2.findViewById(R.id.noBt);
+
+                    yes.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            alertDialog.dismiss();
+                            appSharePreference.clearPreferences();
+                            dialogForLanguage();
+                        }
+                    });
+                    no.setOnClickListener(view1 -> alertDialog.dismiss());
+                }
+                break;
+            case R.id.download:
+                installVoiceData();
+                break;
             case R.id.cameraButton:
                 try {
                     if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
@@ -678,6 +715,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 });
                 break;
 
+        }
+    }
+
+    private void installVoiceData() {
+        Intent intent = new Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.setPackage("com.google.android.tts"/*replace with the package name of the target TTS engine*/);
+        String TAG = "TTS";
+        try {
+            Log.v(TAG, "Installing voice data: " + intent.toUri(0));
+            startActivity(intent);
+        } catch (ActivityNotFoundException ex) {
+            Toast.makeText(this, "" + ex.getMessage(), Toast.LENGTH_SHORT).show();
+            Log.e(TAG, "Failed to install TTS data, no acitivty found for " + intent + ")");
         }
     }
 
@@ -1213,7 +1264,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 appSharePreference.setSelectedLanguage(languageSelected);
                 appSharePreference.setTargetLanguage(targetLanguage);
                 alertDialog.dismiss();
-                Toast.makeText(MainActivity.this, languageSelected + " is set", Toast.LENGTH_LONG).show();
+                myToast.showGreen(MainActivity.this, "We are good to go");
             }
 
         });
@@ -1233,6 +1284,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.viaText:
                 Toast.makeText(this, "Via Text", Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.setLanguage:
+                Toast.makeText(this, "Set Language", Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.download:
+                Toast.makeText(this, "Download", Toast.LENGTH_SHORT).show();
                 break;
         }
         return false;

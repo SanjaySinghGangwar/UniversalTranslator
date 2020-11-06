@@ -1,6 +1,8 @@
 package com.sanjaysgangwar.universaltranslator.activity;
 
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -10,7 +12,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
 import com.sanjaysgangwar.universaltranslator.R;
+import com.sanjaysgangwar.universaltranslator.modelClasses.AppSharePreference;
 import com.sanjaysgangwar.universaltranslator.sevices.myProgressView;
+import com.sanjaysgangwar.universaltranslator.sevices.myToast;
+
+import java.util.Locale;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -32,8 +38,9 @@ public class resultScreen extends AppCompatActivity implements View.OnClickListe
     @BindView(R.id.translatedLanguageSpeaker)
     ImageView translatedLanguageSpeaker;
     String sourceText, translatedText, sourceLocale, languageSelected;
-
+    TextToSpeech tssTranslated, tssSource;
     myProgressView myProgressView;
+    AppSharePreference appSharePreference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +49,7 @@ public class resultScreen extends AppCompatActivity implements View.OnClickListe
         ButterKnife.bind(this);
 
         initListener();
+        talkToSpeechInit();
         myProgressView = new myProgressView(this);
 
         Bundle extras = getIntent().getExtras();
@@ -63,6 +71,37 @@ public class resultScreen extends AppCompatActivity implements View.OnClickListe
 
     }
 
+    private void talkToSpeechInit() {
+        tssTranslated = new TextToSpeech(this, status -> {
+            if (status == TextToSpeech.SUCCESS) {
+                int lang = tssTranslated.setLanguage(Locale.forLanguageTag(appSharePreference.getTargetLanguageCode())/*Locale.getDefault()*/);/*Locale.getDefault()*//*Locale.forLanguageTag("hi")*/
+                tssTranslated.setVoice(tssTranslated.getVoice());
+                tssTranslated.setPitch(1);
+                tssTranslated.setSpeechRate(0.9f);
+                if (lang == TextToSpeech.LANG_MISSING_DATA
+                        || lang == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    myToast.showRed(resultScreen.this, "Sorry, Foreign Language not downloaded !!");
+                }
+            } else {
+                Log.e("TTS", "Initialization failed");
+            }
+        });
+        tssSource = new TextToSpeech(this, status -> {
+            if (status == TextToSpeech.SUCCESS) {
+                int lang = tssSource.setLanguage(Locale.forLanguageTag(sourceLocale.trim())/*Locale.getDefault()*/);/*Locale.getDefault()*//*Locale.forLanguageTag("hi")*/
+                tssSource.setVoice(tssTranslated.getVoice());
+                tssSource.setPitch(1);
+                tssSource.setSpeechRate(0.9f);
+                if (lang == TextToSpeech.LANG_MISSING_DATA
+                        || lang == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    myToast.showRed(resultScreen.this, "Sorry, Your Language not Supported !!");
+                }
+            } else {
+                Log.e("TTS", "Initialization failed");
+            }
+        });
+    }
+
     @Override
     public void onBackPressed() {
         super.onBackPressed();
@@ -70,20 +109,36 @@ public class resultScreen extends AppCompatActivity implements View.OnClickListe
     }
 
     private void initListener() {
+        appSharePreference = new AppSharePreference(this);
         translatedLanguageSpeaker.setOnClickListener(this);
         translatedLanguageSpeaker.setOnLongClickListener(this);
         extractedSourceLanguageSpeaker.setOnClickListener(this);
         extractedSourceLanguageSpeaker.setOnLongClickListener(this);
+
     }
 
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.extractedSourceLanguageSpeaker:
-                Toast.makeText(this, "extracted", Toast.LENGTH_SHORT).show();
+                if (tssSource != null) {
+                    if (tssSource.isSpeaking()) {
+                        tssSource.stop();
+                    } else {
+                        tssSource.speak(sourceText.trim(), TextToSpeech.QUEUE_FLUSH, null);
+
+                    }
+                }
                 break;
             case R.id.translatedLanguageSpeaker:
-                Toast.makeText(this, "Transalted", Toast.LENGTH_SHORT).show();
+                if (tssTranslated != null) {
+                    if (tssTranslated.isSpeaking()) {
+                        tssTranslated.stop();
+                    } else {
+                        tssTranslated.speak(translatedText.trim(), TextToSpeech.QUEUE_FLUSH, null);
+
+                    }
+                }
                 break;
         }
     }

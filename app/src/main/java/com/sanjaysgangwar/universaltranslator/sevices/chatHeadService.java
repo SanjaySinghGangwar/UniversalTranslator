@@ -30,6 +30,7 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.provider.Settings;
+import android.speech.tts.TextToSpeech;
 import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -42,6 +43,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.cardview.widget.CardView;
 import androidx.core.app.NotificationCompat;
 
 import com.google.gson.JsonArray;
@@ -60,6 +62,7 @@ import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Random;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -105,8 +108,8 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
     String extractText;
     int count;
     int Ccounter;
-
-
+    TextToSpeech tssTranslated, tssSource;
+    int langSource, langTrans;
     private FloatingViewManager mFloatingViewManager;
     private MediaProjection projection;
     private VirtualDisplay vdisplay;
@@ -130,8 +133,6 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
     @Override
     public void onCreate() {
         super.onCreate();
-
-
         mgr = (MediaProjectionManager) this.getSystemService(MEDIA_PROJECTION_SERVICE);
         usm = (UsageStatsManager) this.getSystemService(Context.USAGE_STATS_SERVICE);
 
@@ -147,6 +148,36 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
 
     }
 
+    private void talkToSpeechInit() {
+        tssTranslated = new TextToSpeech(this, status -> {
+            if (status == TextToSpeech.SUCCESS) {
+                langTrans = tssTranslated.setLanguage(Locale.forLanguageTag(appSharePreference.getTargetLanguageCode())/*Locale.getDefault()*/);/*Locale.getDefault()*//*Locale.forLanguageTag("hi")*/
+                tssTranslated.setVoice(tssTranslated.getVoice());
+                tssTranslated.setPitch(1);
+                tssTranslated.setSpeechRate(0.9f);
+                if (langTrans == TextToSpeech.LANG_MISSING_DATA
+                        || langTrans == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    myToast.showRed(context, "Sorry, Foreign Language not Supported !!");
+                }
+            } else {
+                Log.e("TTS", "Initialization failed");
+            }
+        });
+        tssSource = new TextToSpeech(this, status -> {
+            if (status == TextToSpeech.SUCCESS) {
+                langSource = tssSource.setLanguage(Locale.forLanguageTag(sourceLocale.trim())/*Locale.getDefault()*/);/*Locale.getDefault()*//*Locale.forLanguageTag("hi")*/
+                tssSource.setVoice(tssSource.getVoice());
+                tssSource.setPitch(1);
+                tssSource.setSpeechRate(0.9f);
+                if (langSource == TextToSpeech.LANG_MISSING_DATA
+                        || langSource == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    myToast.showRed(context, "Sorry, Your Language not Supported !!");
+                }
+            } else {
+                Log.e("TTS", "Initialization failed");
+            }
+        });
+    }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -471,8 +502,8 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
                         Log.i("REST API", "onResponse: TRANSLATE" + response.body().getData().getTranslations().get(0).getTranslatedText());
                         if (response.body().getData().getTranslations().get(0).getTranslatedText() != null) {
                             sourceLocale = response.body().getData().getTranslations().get(0).getDetectedSourceLanguage();
-
                             translatedText = response.body().getData().getTranslations().get(0).getTranslatedText();
+                            talkToSpeechInit();
                             createViewForResult();
                         }
                     } else {
@@ -524,12 +555,18 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
                     TextView translateText = view.findViewById(R.id.translatedLanguageTV);
                     TextView targetLanguage = view.findViewById(R.id.targetLanguage);
                     TextView sourceLanguage = view.findViewById(R.id.sourceLanguage);
+                    CardView sourceLanguageSpeak = view.findViewById(R.id.extractedSourceLanguageSpeaker);
+                    CardView translatedLanguageSpeaker = view.findViewById(R.id.translatedLanguageSpeaker);
                     sourceLanguage.setText("Auto : " + sourceLocale);
                     targetLanguage.setText(appSharePreference.getSelectedLanguage());
                     sourceText.setText(extractText.trim());
 
                     translateText.setText(translatedText.trim());
+
                     closeBT.setOnClickListener(this);
+                    sourceLanguageSpeak.setOnClickListener(this);
+                    translatedLanguageSpeaker.setOnClickListener(this);
+
 
                     windowManager.addView(view, params);
 
@@ -606,6 +643,26 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
 
             case R.id.closeBT:
                 resultVisibilityOff();
+                break;
+            case R.id.translatedLanguageSpeaker:
+                if (tssTranslated != null) {
+                    if (tssTranslated.isSpeaking()) {
+                        tssTranslated.stop();
+                    } else {
+                        tssTranslated.speak(translatedText.trim(), TextToSpeech.QUEUE_FLUSH, null);
+
+                    }
+                }
+                break;
+            case R.id.extractedSourceLanguageSpeaker:
+                if (tssSource != null) {
+                    if (tssSource.isSpeaking()) {
+                        tssSource.stop();
+                    } else {
+                        tssSource.speak(extractText.trim(), TextToSpeech.QUEUE_FLUSH, null);
+
+                    }
+                }
                 break;
         }
     }
