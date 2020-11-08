@@ -15,14 +15,6 @@
       },
       "oauth_client": [
         {
-          "client_id": "794511230583-u5ur3pc6n0ijntehrmtrgmuciqakhrug.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.hgnis.reader",
-            "certificate_hash": "4492eea28af54e2e99fe021f0953e89fca119873"
-          }
-        },
-        {
           "client_id": "794511230583-aofijg2r4ur2c91im2tn8a3toln0jbt5.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -52,14 +44,6 @@
         }
       },
       "oauth_client": [
-        {
-          "client_id": "794511230583-tknapfre7ta6jaqcm59cqb4obl3oa8o8.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.sanjaysgangwar.clock",
-            "certificate_hash": "ad76d9b473f7824697b9f72b956dedac6ac5f2ca"
-          }
-        },
         {
           "client_id": "794511230583-aofijg2r4ur2c91im2tn8a3toln0jbt5.apps.googleusercontent.com",
           "client_type": 3
@@ -114,9 +98,9 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:794511230583:android:3e4a3f4181570c0efb6872",
+        "mobilesdk_app_id": "1:794511230583:android:09b0b43ee021a3f5fb6872",
         "android_client_info": {
-          "package_name": "com.sanjaysgangwar.universaltranslator"
+          "package_name": "com.theaverageguys.universaltranslator"
         }
       },
       "oauth_client": [
@@ -139,8 +123,7 @@
             }
           ]
         }
-      },
-      "admob_app_id": "ca-app-pub-9041694244207254~1283538802"
+      }
     }
   ],
   "configuration_version": "1"

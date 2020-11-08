@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.sanjaysgangwar.universaltranslator">
+    package="com.theaverageguys.universaltranslator">
 
     <uses-permission
         android:name="android.permission.PACKAGE_USAGE_STATS"
@@ -25,24 +25,26 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".activity.Splash">
+        <activity
+            android:name="com.theaverageguys.universaltranslator.activity.Splash"
+            android:theme="@style/NoAction">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".activity.resultScreen" />
+        <activity android:name="com.theaverageguys.universaltranslator.activity.resultScreen" />
         <activity
             android:name="com.theartofdev.edmodo.cropper.CropImageActivity"
             android:theme="@style/Base.Theme.AppCompat" />
         <activity
-            android:name=".activity.MainActivity"
+            android:name="com.theaverageguys.universaltranslator.activity.MainActivity"
             android:screenOrientation="portrait" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="com.sanjaysgangwar.universaltranslator.fileprovider"
+            android:authorities="com.theaverageguys.universaltranslator.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
@@ -50,7 +52,7 @@
                 android:resource="@xml/file_list" />
         </provider>
         <service
-            android:name=".sevices.chatHeadService"
+            android:name="com.theaverageguys.universaltranslator.sevices.chatHeadService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="mediaProjection"
