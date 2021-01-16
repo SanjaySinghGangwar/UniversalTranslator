@@ -7,7 +7,7 @@
     android:paddingBottom="20dp">
 
     <TextView
-        android:fontFamily="@font/myfont_regular"
+
         android:id="@+id/textView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

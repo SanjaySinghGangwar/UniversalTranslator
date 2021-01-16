@@ -3,6 +3,8 @@
     <string name="running">Translator at your service</string>
     <string name="default_floatingview_channel_id">default_floatingview_channel</string>
     <string name="Enter_text_here">Enter Text here</string>
+    <string name="donate">DONATE</string>
+    <string name="default_notification_channel_id">123</string>
     <string-array name="list">
         <item> Afrikaans</item>
         <item> Albanian</item>

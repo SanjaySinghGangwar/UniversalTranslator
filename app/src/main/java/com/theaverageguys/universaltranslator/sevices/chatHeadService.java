@@ -18,7 +18,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
-import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.MediaScannerConnection;
@@ -110,6 +109,7 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
     int Ccounter;
     TextToSpeech tssTranslated, tssSource;
     int langSource, langTrans;
+    myProgressView progressView;
     private FloatingViewManager mFloatingViewManager;
     private MediaProjection projection;
     private VirtualDisplay vdisplay;
@@ -133,6 +133,7 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
     @Override
     public void onCreate() {
         super.onCreate();
+        progressView = new myProgressView(context);
         mgr = (MediaProjectionManager) this.getSystemService(MEDIA_PROJECTION_SERVICE);
         usm = (UsageStatsManager) this.getSystemService(Context.USAGE_STATS_SERVICE);
 
@@ -157,7 +158,7 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
                 tssTranslated.setSpeechRate(0.9f);
                 if (langTrans == TextToSpeech.LANG_MISSING_DATA
                         || langTrans == TextToSpeech.LANG_NOT_SUPPORTED) {
-                    myToast.showRed(context, "Sorry, Foreign Language not Supported !!");
+                    myToast.showRed(context, "Sorry, Foreign Language not Supported By Text To Speech!!");
                 }
             } else {
                 Log.e("TTS", "Initialization failed");
@@ -171,7 +172,7 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
                 tssSource.setSpeechRate(0.9f);
                 if (langSource == TextToSpeech.LANG_MISSING_DATA
                         || langSource == TextToSpeech.LANG_NOT_SUPPORTED) {
-                    myToast.showRed(context, "Sorry, Your Language not Supported !!");
+                    myToast.showRed(context, "Sorry, Your Mother Tongue not Supported By Text To Speech!!");
                 }
             } else {
                 Log.e("TTS", "Initialization failed");
@@ -188,31 +189,28 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
         inflater = LayoutInflater.from(this);
         iconView = (CircleImageView) inflater.inflate(R.layout.widget_chathead, null, false);
 
-        iconView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        iconView.setOnClickListener(v -> {
 
-                resultVisibilityOff();
-                count = 0;
-                Ccounter = 0;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            resultVisibilityOff();
+            count = 0;
+            Ccounter = 0;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 
-                    if (usageAccessGranted(context)) {
+                if (usageAccessGranted(context)) {
 
-                        getCurrentAppForegound();
+                    getCurrentAppForegound();
 
-                        if (defaultHomePackageName.equalsIgnoreCase(currentForegroundPackageName)) {
-                            Toast.makeText(context, "No App is in Foreground", Toast.LENGTH_LONG).show();
-                        } else {
-
-
-                            createLayoutForServiceClass();
-                        }
+                    if (defaultHomePackageName.equalsIgnoreCase(currentForegroundPackageName)) {
+                        Toast.makeText(context, "Open App To Read", Toast.LENGTH_LONG).show();
                     } else {
-                        Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
-                        intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(intent);
+
+
+                        createLayoutForServiceClass();
                     }
+                } else {
+                    Intent intent1 = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
+                    intent1.setFlags(FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent1);
                 }
             }
         });
@@ -221,7 +219,7 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
         mFloatingViewManager.setFixedTrashIconImage(R.drawable.recycle_bin);
         mFloatingViewManager.setActionTrashIconImage(R.drawable.recycle_bin);
         mFloatingViewManager.setDisplayMode(FloatingViewManager.DISPLAY_MODE_SHOW_ALWAYS);
-        mFloatingViewManager.setSafeInsetRect((Rect) intent.getParcelableExtra(EXTRA_CUTOUT_SAFE_AREA));
+        mFloatingViewManager.setSafeInsetRect(intent.getParcelableExtra(EXTRA_CUTOUT_SAFE_AREA));
         final FloatingViewManager.Options options = new FloatingViewManager.Options();
         options.overMargin = (int) (16 * metrics.density);
         mFloatingViewManager.addViewToWindow(iconView, options);
@@ -265,20 +263,15 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
         icon = BitmapFactory.decodeResource(context.getResources(), R.mipmap.transparent_image);
         cropImageView.setImageBitmap(icon);
 
-        crossArrow.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                view.setVisibility(View.GONE);
-                iconView.setVisibility(View.VISIBLE);
-            }
+        crossArrow.setOnClickListener(v -> {
+            view.setVisibility(View.GONE);
+            iconView.setVisibility(View.VISIBLE);
         });
-        tickArrow.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                crossArrow.setVisibility(View.GONE);
-                tickArrow.setVisibility(View.GONE);
-                startCapture();
-            }
+        tickArrow.setOnClickListener(v -> {
+
+            crossArrow.setVisibility(View.GONE);
+            tickArrow.setVisibility(View.GONE);
+            startCapture();
         });
         windowManager.addView(view, params);
 
@@ -395,7 +388,6 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
                             null);
                 } catch (Exception e) {
                     Log.e(getClass().getSimpleName(), "Exception writing out screenshot", e);
-                    Toast.makeText(context, "WRITE ERROR " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
                 }
                 hideViews();
             }
@@ -403,7 +395,7 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
 
         stopCapture();
 
-        loadImageFromStorage(getCacheDir(), "image");
+        loadImageFromStorage(getCacheDir());
     }
 
     private void hideViews() {
@@ -415,8 +407,8 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
         iconView.setVisibility(View.VISIBLE);
     }
 
-    private void loadImageFromStorage(File path, String imageName) {
-
+    private void loadImageFromStorage(File path) {
+        Toast.makeText(context, "Wait, While we get something for You. ", Toast.LENGTH_LONG).show();
         try {
             File f = new File(path, "image" + ".png");
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -443,8 +435,7 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
             request.add("requests", jsonArray);
             if (count == 0) {
                 count = count + 1;
-                boolean stat = utils.networkIsOnline(this);
-                if (stat == true) {
+                if (utils.networkIsOnline(this)) {
                     Retrofit.Builder builder = new Retrofit.Builder()
                             .baseUrl("https://vision.googleapis.com/v1/images:annotate/")
                             .addConverterFactory(GsonConverterFactory.create());
@@ -481,7 +472,7 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
 
         } catch (Exception e) {
             e.printStackTrace();
-            myToast.showRed(this, e.getLocalizedMessage());
+            //myToast.showRed(this, e.getLocalizedMessage());
         }
 
 
@@ -640,7 +631,6 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
-
             case R.id.closeBT:
                 resultVisibilityOff();
                 break;
@@ -660,7 +650,6 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
                         tssSource.stop();
                     } else {
                         tssSource.speak(extractText.trim(), TextToSpeech.QUEUE_FLUSH, null);
-
                     }
                 }
                 break;
@@ -670,7 +659,6 @@ public class chatHeadService extends Service implements FloatingViewListener, Vi
     private void resultVisibilityOff() {
         if (view2 != null) {
             if (view2.getVisibility() == View.VISIBLE) {
-                //tss.stop
                 hideViews2();
             }
         }

@@ -7,4 +7,14 @@
         android:icon="@drawable/icons8_language_48px"
         android:title="Set Language"
         app:showAsAction="always" />
+    <item
+        android:id="@+id/download"
+        android:icon="@drawable/download"
+        android:title="Download"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/donate"
+        android:icon="@drawable/donate_image"
+        android:title="@string/donate"
+        app:showAsAction="ifRoom" />
 </menu>

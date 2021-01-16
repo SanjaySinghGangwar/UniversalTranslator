@@ -15,6 +15,7 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.speech.tts.TextToSpeech;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -29,81 +30,87 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.theartofdev.edmodo.cropper.CropImage;
 import com.theaverageguys.universaltranslator.R;
-import com.theaverageguys.universaltranslator.imageProcessing.google;
+import com.theaverageguys.universaltranslator.api.apiInterface;
+import com.theaverageguys.universaltranslator.databinding.ActivityMainBinding;
 import com.theaverageguys.universaltranslator.modelClasses.AppSharePreference;
+import com.theaverageguys.universaltranslator.modelClasses.translateModel.Model;
+import com.theaverageguys.universaltranslator.modelClasses.visionModel.VisionModel;
 import com.theaverageguys.universaltranslator.sevices.chatHeadService;
 import com.theaverageguys.universaltranslator.sevices.myProgressView;
 import com.theaverageguys.universaltranslator.sevices.myToast;
 import com.theaverageguys.universaltranslator.sevices.utils;
 import com.toptoche.searchablespinnerlibrary.SearchableSpinner;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import jp.co.recruit_lifestyle.android.floatingview.FloatingViewManager;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
-import static com.theaverageguys.universaltranslator.imageProcessing.google.sentImageToServer;
+import static com.theaverageguys.universaltranslator.sevices.utils.APIkey;
+import static com.theaverageguys.universaltranslator.sevices.utils.networkIsOnline;
+
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, View.OnLongClickListener {
 
     private static final int REQUEST_SCREENSHOT = 59706;
     private static String pictureFilePathCheckin = "";
     int viaCameraCode = 100, viaGalleryCode = 101, chatHead = 102;
-    @BindView(R.id.cameraButton)
-    CardView cameraButton;
-    @BindView(R.id.viaText)
-    CardView viaText;
-    @BindView(R.id.viaGallery)
-    CardView viaGallery;
-    @BindView(R.id.viaPhone)
-    CardView viaPhone;
-    @BindView(R.id.setLanguage)
-    CardView setLanguage;
-    @BindView(R.id.download)
-    CardView download;
+
     String languageSelected;
     String targetLanguage;
-    myProgressView myProgressView;
+    myProgressView progressView;
     AppSharePreference appSharePreference;
+    private ActivityMainBinding bind;
     private MediaProjectionManager mgr;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        ButterKnife.bind(this);
-        initListener();
-        myProgressView = new myProgressView(this);
-        appSharePreference = new AppSharePreference(this);
 
+        bind = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(bind.getRoot());
+
+        initAllComponents();
+        getToken();
 
     }
 
-    private void initListener() {
-        cameraButton.setOnClickListener(this);
-        cameraButton.setOnLongClickListener(this);
-        viaText.setOnClickListener(this);
-        viaText.setOnLongClickListener(this);
-        viaGallery.setOnClickListener(this);
-        viaGallery.setOnLongClickListener(this);
-        viaPhone.setOnClickListener(this);
-        viaPhone.setOnLongClickListener(this);
-        download.setOnClickListener(this);
-        download.setOnLongClickListener(this);
-        setLanguage.setOnClickListener(this);
-        setLanguage.setOnLongClickListener(this);
+    private void getToken() {
+        String refreshedToken = FirebaseInstanceId.getInstance().getToken();
+        Log.d("Firebase ", "Refreshed token: " + refreshedToken);
+    }
+
+
+    private void initAllComponents() {
+        progressView = new myProgressView(this);
+        appSharePreference = new AppSharePreference(this);
+        bind.cameraButton.setOnClickListener(this);
+        bind.cameraButton.setOnLongClickListener(this);
+        bind.viaText.setOnClickListener(this);
+        bind.viaText.setOnLongClickListener(this);
+        bind.viaGallery.setOnClickListener(this);
+        bind.viaGallery.setOnLongClickListener(this);
+        bind.viaPhone.setOnClickListener(this);
+        bind.viaPhone.setOnLongClickListener(this);
 
 
         mgr = (MediaProjectionManager) getSystemService(MEDIA_PROJECTION_SERVICE);
@@ -141,21 +148,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
                 }
-                croper(Uri.fromFile(imageFile));
+                cropImage(Uri.fromFile(imageFile));
 
             } else if (requestCode == viaGalleryCode) {
-                croper(data.getData());
+                cropImage(data.getData());
             } else if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
                 CropImage.ActivityResult result = CropImage.getActivityResult(data);
-                if (resultCode == RESULT_OK) {
-                    if (utils.networkIsOnline(this)) {
-                        sentImageToServer(new File(result.getUri().getPath()), getApplicationContext());
-                    } else {
-                        myToast.showRed(this, "No Internet Connection");
-                    }
-                } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
-                    Toast.makeText(this, "" + result.getError(), Toast.LENGTH_SHORT).show();
+                if (utils.networkIsOnline(this)) {
+                    sentImageToServer(new File(result.getUri().getPath()));
+                } else {
+                    myToast.showRed(this, "No Internet Connection");
                 }
+
             } else if (requestCode == chatHead) {
                 openChatHead();
             } else if (requestCode == REQUEST_SCREENSHOT) {
@@ -166,9 +170,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             myToast.showRed(this, "Give it a chance");
         }
 
+
     }
 
-    private void croper(Uri image) {
+    private void cropImage(Uri image) {
         CropImage.activity(image)
                 .setOutputCompressQuality(100)
                 .start(this);
@@ -189,19 +194,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Button yes = view2.findViewById(R.id.yesBT);
                     Button no = view2.findViewById(R.id.noBt);
 
-                    yes.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            alertDialog.dismiss();
-                            appSharePreference.clearPreferences();
-                            dialogForLanguage();
-                        }
+                    yes.setOnClickListener(v -> {
+                        alertDialog.dismiss();
+                        appSharePreference.clearPreferences();
+                        dialogForLanguage();
                     });
                     no.setOnClickListener(view1 -> alertDialog.dismiss());
                 }
-                break;
-            case R.id.download:
-                installVoiceData();
                 break;
             case R.id.cameraButton:
                 try {
@@ -706,7 +705,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     } else {
                         alertDialog.dismiss();
                         if (utils.networkIsOnline(MainActivity.this)) {
-                            google.translateAPI(dataToTranslate, getApplicationContext());
+                            translateAPI(dataToTranslate);
                         } else {
                             myToast.showRed(MainActivity.this, "No Internet Connection");
                         }
@@ -773,6 +772,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
+            case R.id.donate:
+                Intent i = new Intent(MainActivity.this, donate.class);
+                startActivity(i);
+                break;
+            case R.id.download:
+                installVoiceData();
+                break;
+
             case R.id.targetLanguage:
                 if (appSharePreference.getSelectedLanguage().isEmpty()) {
                     dialogForLanguage();
@@ -1264,7 +1271,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 appSharePreference.setSelectedLanguage(languageSelected);
                 appSharePreference.setTargetLanguage(targetLanguage);
                 alertDialog.dismiss();
-                myToast.showGreen(MainActivity.this, "We are good to go");
             }
 
         });
@@ -1288,9 +1294,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.setLanguage:
                 Toast.makeText(this, "Set Language", Toast.LENGTH_SHORT).show();
                 break;
-            case R.id.download:
-                Toast.makeText(this, "Download", Toast.LENGTH_SHORT).show();
-                break;
         }
         return false;
     }
@@ -1311,4 +1314,111 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    public void sentImageToServer(File absoluteFile) {
+
+        try {
+            File f = new File(String.valueOf((absoluteFile)));
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            Bitmap b = BitmapFactory.decodeStream(new FileInputStream(f));
+
+            b.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+            byte[] imageBytes = baos.toByteArray();
+            String imageString = Base64.encodeToString(imageBytes, Base64.DEFAULT);
+
+            //vision Api
+            JsonObject type = new JsonObject();
+            JsonObject content = new JsonObject();
+            JsonObject requests = new JsonObject();
+            JsonArray jsonArray = new JsonArray();
+
+            content.addProperty("content", imageString);
+            type.addProperty("type", "DOCUMENT_TEXT_DETECTION");/*TEXT_DETECTION*/
+            requests.add("image", content);
+            JsonArray array = new JsonArray();
+            array.add(type);
+            requests.add("features", array);
+            jsonArray.add(requests);
+            JsonObject request = new JsonObject();
+            request.add("requests", jsonArray);
+
+
+            if (networkIsOnline(this)) {
+                progressView.showLoader();
+                Retrofit.Builder builder = new Retrofit.Builder()
+                        .baseUrl("https://vision.googleapis.com/v1/images:annotate/")
+                        .addConverterFactory(GsonConverterFactory.create());
+                Retrofit retrofit = builder.build();
+                apiInterface apiInterface = retrofit.create(apiInterface.class);
+                Call<VisionModel> call = apiInterface.visionApi(request);
+                call.enqueue(new Callback<VisionModel>() {
+                    @Override
+                    public void onResponse(Call<VisionModel> call, Response<VisionModel> response) {
+                        if (response.isSuccessful()) {
+                            if (response.body() != null) {
+                                try {
+                                    progressView.hideLoader();
+                                    String extractText = response.body().getResponses().get(0).getFullTextAnnotation().getText();
+                                    translateAPI(extractText);
+                                } catch (Exception e) {
+                                    progressView.hideLoader();
+                                    myToast.showRed(MainActivity.this, e.getMessage());
+                                }
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<VisionModel> call, Throwable t) {
+                        progressView.hideLoader();
+                        myToast.showRed(MainActivity.this, t.getMessage());
+                    }
+                });
+            } else {
+                progressView.hideLoader();
+                myToast.showRed(MainActivity.this, "No internet Connection");
+            }
+
+
+        } catch (Exception e) {
+            myToast.showRed(this, e.getMessage());
+        }
+    }
+
+    public void translateAPI(String extractText) {
+        progressView.showLoader();
+        Retrofit.Builder builder = new Retrofit.Builder()
+                .baseUrl("https://translation.googleapis.com/language/translate/")
+                .addConverterFactory(GsonConverterFactory.create());
+        Retrofit retrofit = builder.build();
+        apiInterface apiInterface = retrofit.create(apiInterface.class);
+        Call<Model> call = apiInterface.translateApi(APIkey, extractText, appSharePreference.getTargetLanguage());
+        call.enqueue(new Callback<Model>() {
+            @Override
+            public void onResponse(Call<Model> call, Response<Model> response) {
+                progressView.hideLoader();
+                if (response.isSuccessful()) {
+                    if (response.body() != null) {
+                        Log.i("REST API", "onResponse: TRANSLATE" + response.body().getData().getTranslations().get(0).getTranslatedText());
+                        if (response.body().getData().getTranslations().get(0).getTranslatedText() != null) {
+                            String sourceLocale = response.body().getData().getTranslations().get(0).getDetectedSourceLanguage();
+                            String translatedText = response.body().getData().getTranslations().get(0).getTranslatedText();
+                            Intent i = new Intent(MainActivity.this, resultScreen.class);
+                            i.putExtra("sourceLocale", sourceLocale);
+                            i.putExtra("sourceText", extractText);
+                            i.putExtra("translatedText", translatedText);
+                            i.putExtra("languageSelected", appSharePreference.getSelectedLanguage());
+                            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(i);
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Model> call, Throwable t) {
+                progressView.hideLoader();
+                myToast.showRed(MainActivity.this, "Try again " + t.getLocalizedMessage());
+            }
+        });
+    }
 }

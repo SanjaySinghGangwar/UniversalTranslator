@@ -3,21 +3,22 @@
     xmlns:card_view="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
+    android:id="@+id/mainLayout"
     android:layout_height="match_parent"
     tools:context=".activity.MainActivity">
 
     <androidx.cardview.widget.CardView
-        android:id="@+id/download"
-        android:layout_width="90dp"
-        android:layout_height="90dp"
-        android:layout_margin="10dp"
-        card_view:cardBackgroundColor="@color/light_green"
+        android:id="@+id/cameraButton"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_margin="15dp"
+        card_view:cardBackgroundColor="@color/colorAccent"
         card_view:cardCornerRadius="8dp"
-        card_view:cardElevation="8dp"
-        card_view:layout_constraintBottom_toTopOf="@+id/viaText"
+        card_view:cardElevation="10dp"
+        card_view:layout_constraintBottom_toTopOf="@+id/viaGallery"
         card_view:layout_constraintEnd_toEndOf="parent"
-        card_view:layout_constraintHorizontal_bias="0.071"
-        card_view:layout_constraintStart_toEndOf="@+id/cameraButton"
+        card_view:layout_constraintHorizontal_bias="0.338"
+        card_view:layout_constraintStart_toStartOf="parent"
         card_view:layout_constraintTop_toTopOf="parent"
         card_view:layout_constraintVertical_bias="1.0">
 
@@ -25,54 +26,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
-
-
-            android:weightSum="10">
-
-            <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="9"
-                android:padding="10dp"
-                card_view:srcCompat="@drawable/download" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="bottom|right"
-                android:layout_weight="1"
-                android:fontFamily="@font/myfont_regular"
-                android:gravity="bottom|right"
-                android:paddingRight="5dp"
-                android:text="Download Languages"
-                android:textColor="@android:color/white"
-                android:textStyle="bold" />
-
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
-
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cameraButton"
-        android:layout_width="150dp"
-        android:layout_height="150dp"
-        android:layout_margin="10dp"
-        android:layout_marginBottom="16dp"
-        card_view:cardBackgroundColor="@color/colorAccent"
-        card_view:cardCornerRadius="8dp"
-        card_view:cardElevation="8dp"
-        card_view:layout_constraintBottom_toTopOf="@+id/viaGallery"
-        card_view:layout_constraintEnd_toEndOf="parent"
-        card_view:layout_constraintHorizontal_bias="0.199"
-        card_view:layout_constraintStart_toStartOf="parent"
-        card_view:layout_constraintTop_toTopOf="parent"
-        card_view:layout_constraintVertical_bias="0.937">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-
-
             android:weightSum="10">
 
             <ImageView
@@ -87,38 +40,36 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom|right"
                 android:layout_weight="1"
-                android:fontFamily="@font/myfont_regular"
+
                 android:gravity="bottom|right"
                 android:paddingRight="5dp"
                 android:text="Via Camera"
                 android:textColor="@android:color/white"
                 android:textStyle="bold" />
-
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
     <androidx.cardview.widget.CardView
         android:id="@+id/viaText"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
         android:layout_gravity="bottom|left"
+        android:layout_margin="15dp"
         android:layout_marginBottom="10dp"
         card_view:cardBackgroundColor="@color/PrimaryDark"
         card_view:cardCornerRadius="8dp"
-        card_view:cardElevation="8dp"
+        card_view:cardElevation="10dp"
         card_view:layout_constraintBottom_toTopOf="@+id/viaPhone"
         card_view:layout_constraintEnd_toEndOf="parent"
-        card_view:layout_constraintHorizontal_bias="0.262"
+        card_view:layout_constraintHorizontal_bias="0.0"
         card_view:layout_constraintStart_toEndOf="@+id/cameraButton"
         card_view:layout_constraintTop_toTopOf="parent"
-        card_view:layout_constraintVertical_bias="0.958">
+        card_view:layout_constraintVertical_bias="1.0">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
-
-
             android:weightSum="10">
 
             <ImageView
@@ -134,37 +85,35 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom|right"
                 android:layout_weight="1"
-                android:fontFamily="@font/myfont_regular"
+
                 android:gravity="bottom|right"
                 android:paddingRight="5dp"
                 android:text="Via Text"
                 android:textColor="@android:color/white"
                 android:textStyle="bold" />
-
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
     <androidx.cardview.widget.CardView
         android:id="@+id/viaGallery"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
         android:layout_gravity="top|right"
+        android:layout_margin="15dp"
         card_view:cardBackgroundColor="@color/Primary"
         card_view:cardCornerRadius="8dp"
-        card_view:cardElevation="8dp"
+        card_view:cardElevation="10dp"
         card_view:layout_constraintBottom_toBottomOf="parent"
         card_view:layout_constraintEnd_toStartOf="@+id/viaPhone"
-        card_view:layout_constraintHorizontal_bias="0.708"
+        card_view:layout_constraintHorizontal_bias="1.0"
         card_view:layout_constraintStart_toStartOf="parent"
         card_view:layout_constraintTop_toTopOf="parent"
-        card_view:layout_constraintVertical_bias="0.527">
+        card_view:layout_constraintVertical_bias="0.511">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
-
-
             android:weightSum="10">
 
             <ImageView
@@ -180,13 +129,12 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom|right"
                 android:layout_weight="1"
-                android:fontFamily="@font/myfont_regular"
+
                 android:gravity="bottom|right"
                 android:paddingRight="5dp"
                 android:text="Via Gallery"
                 android:textColor="@android:color/white"
                 android:textStyle="bold" />
-
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
@@ -194,22 +142,21 @@
         android:id="@+id/viaPhone"
         android:layout_width="150dp"
         android:layout_height="150dp"
+        android:layout_margin="15dp"
         card_view:cardBackgroundColor="@color/secondary_text"
         card_view:cardCornerRadius="8dp"
-        card_view:cardElevation="8dp"
+        card_view:cardElevation="10dp"
         card_view:layout_constraintBottom_toBottomOf="parent"
         card_view:layout_constraintEnd_toEndOf="parent"
-        card_view:layout_constraintHorizontal_bias="0.796"
+        card_view:layout_constraintHorizontal_bias="0.72"
         card_view:layout_constraintStart_toStartOf="parent"
         card_view:layout_constraintTop_toTopOf="parent"
-        card_view:layout_constraintVertical_bias="0.693">
+        card_view:layout_constraintVertical_bias="0.666">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
-
-
             android:weightSum="10">
 
             <ImageView
@@ -225,57 +172,12 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom|right"
                 android:layout_weight="1"
-                android:fontFamily="@font/myfont_regular"
+
                 android:gravity="bottom|right"
                 android:paddingRight="5dp"
                 android:text="Via Phone Screen"
                 android:textColor="@android:color/white"
                 android:textStyle="bold" />
-
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
-
-    <androidx.cardview.widget.CardView
-        android:id="@+id/setLanguage"
-        android:layout_width="90dp"
-        android:layout_height="90dp"
-        android:layout_margin="10dp"
-        card_view:cardBackgroundColor="@color/cyan"
-        card_view:cardCornerRadius="8dp"
-        card_view:cardElevation="8dp"
-        card_view:layout_constraintBottom_toBottomOf="parent"
-        card_view:layout_constraintEnd_toStartOf="@+id/viaPhone"
-        card_view:layout_constraintHorizontal_bias="0.92"
-        card_view:layout_constraintStart_toStartOf="parent"
-        card_view:layout_constraintTop_toBottomOf="@+id/viaGallery"
-        card_view:layout_constraintVertical_bias="0.0">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-
-            android:weightSum="10">
-
-            <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="9"
-                android:padding="10dp"
-                card_view:srcCompat="@drawable/linguistics" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="bottom|right"
-                android:layout_weight="1"
-                android:fontFamily="@font/myfont_regular"
-                android:gravity="bottom|right"
-                android:paddingRight="5dp"
-                android:text="Set Language"
-                android:textColor="@android:color/white"
-                android:textStyle="bold" />
-
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 </androidx.constraintlayout.widget.ConstraintLayout>
